@@ -34,4 +34,11 @@ class QuizSession extends Model
     {
         return $this->hasOne(Coupon::class);
     }
+
+
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
+
 }

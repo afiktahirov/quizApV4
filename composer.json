@@ -7,9 +7,11 @@
     "license": "MIT",
     "require": {
         "php": "^8.2",
+        "abdulmajeed-jamaan/filament-translatable-tabs": "^4.0",
         "filament/filament": "^4.0",
         "laravel/framework": "^12.0",
-        "laravel/tinker": "^2.10.1"
+        "laravel/tinker": "^2.10.1",
+        "outerweb/filament-translatable-fields": "^3.0"
     },
     "require-dev": {
         "fakerphp/faker": "^1.23",

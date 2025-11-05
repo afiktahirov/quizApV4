@@ -11,4 +11,6 @@ protected $fillable = ['merchant_id','name','slug','status'];
 
 
 public function quizzes(){ return $this->hasMany(Quiz::class,'quiz_category_id'); }
+    public function merchant() { return $this->belongsTo(Merchant::class); }
+
 }

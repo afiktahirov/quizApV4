@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\Schema;
 return new class extends Migration {
     public function up(): void {
         Schema::create('question_category_question', function (Blueprint $t) {
+            $t->id();
             $t->foreignId('question_id')->constrained()->cascadeOnDelete();
             $t->foreignId('question_category_id')->constrained()->cascadeOnDelete();
             $t->primary(['question_id','question_category_id']);
