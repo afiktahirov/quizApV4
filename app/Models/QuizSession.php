@@ -41,4 +41,9 @@ class QuizSession extends Model
         return $this->belongsTo(User::class);
     }
 
+    public function merchants()
+    {
+        return $this->hasManyThrough(Merchant::class, Quiz::class);
+    }
+
 }

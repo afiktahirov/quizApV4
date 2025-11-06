@@ -15,6 +15,7 @@ use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 
 class QuizResource extends Resource
 {
@@ -56,6 +57,24 @@ class QuizResource extends Resource
         ];
     }
 
+
+
+    public static function getEloquentQuery(): Builder
+    {
+        $query = parent::getEloquentQuery();
+
+        // Admin hər şeyi görsün
+        if (auth()->user()->is_admin ?? false) {
+            return $query;
+        }
+
+        $merchantId = auth()->user()->merchant_id;
+
+        return $query->whereHas('merchants', fn ($q) =>
+        $q->where('merchant_id', $merchantId)
+        );
+    }
+
     public static function getPages(): array
     {
         return [
@@ -64,4 +83,8 @@ class QuizResource extends Resource
             'edit' => EditQuiz::route('/{record}/edit'),
         ];
     }
+
+    
+
+
 }

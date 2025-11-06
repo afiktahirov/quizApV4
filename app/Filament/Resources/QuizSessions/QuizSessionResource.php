@@ -15,6 +15,8 @@ use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
+
 
 class QuizSessionResource extends Resource
 {
@@ -62,6 +64,26 @@ class QuizSessionResource extends Resource
         ];
     }
 
+
+    public static function getEloquentQuery(): Builder
+    {
+        $query = parent::getEloquentQuery();
+
+        // Admin-ə bütün iştirakçılar lazım olacaq
+        if (auth()->user()->is_admin ?? false) {
+            return $query;
+        }
+
+        // Merchant user yalnız öz merchant_id ilə əlaqəli olanları görəcək
+        $merchantId = auth()->user()->merchant_id;
+
+        // İştirakçıların yalnız seçilmiş merchant-ın quizzlərindəki nəticələrini göstəririk
+        return $query->whereHas('quiz', function (Builder $q) use ($merchantId) {
+            $q->whereHas('merchants', function (Builder $q) use ($merchantId) {
+                $q->where('merchant_id', $merchantId);
+            });
+        });
+    }
 
     public static function getPages(): array
     {

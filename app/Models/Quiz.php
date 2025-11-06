@@ -10,7 +10,11 @@ class Quiz extends Model
         'total_questions','pass_threshold_pct','time_per_question_sec','status'
     ];
 
-    public function merchant() { return $this->belongsTo(Merchant::class); }
+    public function merchants()
+    {
+        return $this->belongsToMany(Merchant::class, 'merchant_quiz');
+    }
+
     public function store()    { return $this->belongsTo(Store::class); }
 
     public function category()

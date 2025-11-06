@@ -13,4 +13,8 @@ protected $casts = ['settings' => 'array'];
 
 public function stores(){ return $this->hasMany(Store::class); }
 public function users(){ return $this->hasMany(User::class); }
+    public function quizzes()
+    {
+        return $this->belongsToMany(Quiz::class, 'merchant_quiz');
+    }
 }

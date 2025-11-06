@@ -17,6 +17,12 @@ class QuizForm
                     ->relationship('category', 'name')
                     ->required()
                     ->label('Kateqoriya'),
+                Select::make('merchants')
+                    ->label('Merchants')
+                    ->multiple()
+                    ->relationship('merchants', 'name')  // many‑to‑many
+                    ->searchable()
+                    ->preload(),
                 TextInput::make('title')->label('Başlıq')->required()->maxLength(255),
                 TextInput::make('total_questions')->numeric()->minValue(1)->default(5)->label('Sual sayı'),
                 TextInput::make('pass_threshold_pct')->numeric()->minValue(0)->maxValue(100)->default(60)->label('Keçid %'),

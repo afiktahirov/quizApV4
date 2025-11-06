@@ -17,6 +17,8 @@ use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
 use Illuminate\Contracts\Support\Htmlable;
 use Illuminate\Database\Eloquent\Model as EloquentModel;
+use Illuminate\Database\Eloquent\Builder;
+
 
 
 class QuestionResource extends Resource
@@ -24,6 +26,9 @@ class QuestionResource extends Resource
     protected static ?string $model = Question::class;
 
     protected static ?string $navigationLabel = 'Suallarım';
+
+    protected static bool $isScopedToTenant = false;
+
 
 
     public static function getLabel(): string
@@ -77,6 +82,27 @@ class QuestionResource extends Resource
         return [
             //
         ];
+    }
+
+    public static function getEloquentQuery(): Builder
+    {
+        $query = parent::getEloquentQuery();
+
+        // Admin-ə bütün suallar lazım olacaq
+        if (auth()->user()->is_admin ?? false) {
+            return $query;
+        }
+
+        // Merchant user yalnız öz quizzinə aid sualları görə bilər
+        $merchantId = auth()->user()->merchant_id;
+
+        return $query->whereExists(function ($subQuery) use ($merchantId) {
+            $subQuery->selectRaw(1)
+                ->from('quiz_question_maps as qqm')
+                ->join('merchant_quiz as mq', 'mq.quiz_id', '=', 'qqm.quiz_id')
+                ->whereColumn('qqm.question_id', 'questions.id')
+                ->where('mq.merchant_id', $merchantId);
+        });
     }
 
     public static function afterCreate(Question $question)
