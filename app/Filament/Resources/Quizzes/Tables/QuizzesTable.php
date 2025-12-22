@@ -1,0 +1,57 @@
+<?php
+
+namespace App\Filament\Resources\Quizzes\Tables;
+
+use Filament\Actions\BulkActionGroup;
+use Filament\Actions\DeleteBulkAction;
+use Filament\Actions\EditAction;
+use Filament\Actions\ViewAction;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Table;
+
+class QuizzesTable
+{
+    public static function configure(Table $table): Table
+    {
+        return $table
+            ->columns([
+                TextColumn::make('title')
+                    ->label('Başlıq')
+                    ->searchable(),
+                TextColumn::make('total_questions')
+                    ->numeric()
+                    ->label("Sual sayı")
+                    ->sortable(),
+                TextColumn::make('pass_threshold_pct')
+                    ->numeric()
+                    ->label('Keçid %')
+                    ->sortable(),
+                TextColumn::make('time_per_question_sec')
+                    ->numeric()
+                    ->label("Sual üçün vaxt (saniyə)")
+                    ->sortable(),
+                TextColumn::make('status'),
+                TextColumn::make('created_at')
+                    ->dateTime()
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
+                TextColumn::make('updated_at')
+                    ->dateTime()
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
+            ])
+            ->filters([
+                //
+            ])
+            ->recordActions([
+                EditAction::make(),
+//                ViewAction::make(),
+
+            ])
+            ->toolbarActions([
+                BulkActionGroup::make([
+                    DeleteBulkAction::make(),
+                ]),
+            ]);
+    }
+}

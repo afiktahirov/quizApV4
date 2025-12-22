@@ -18,6 +18,12 @@ use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
 use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Session\Middleware\StartSession;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
+use App\Models\Merchant;
+use App\Filament\Pages\Tenancy\RegisterMerchant;
+use App\Filament\Pages\Tenancy\EditMerchantProfile;
+use Outerweb\FilamentTranslatableFields\Filament\Plugins\FilamentTranslatableFieldsPlugin;
+
+
 
 class AdminPanelProvider extends PanelProvider
 {
@@ -31,8 +37,12 @@ class AdminPanelProvider extends PanelProvider
             ->colors([
                 'primary' => Color::Amber,
             ])
+//            ->tenant(Merchant::class)  // Burada Tenant modelini Merchant olaraq təyin edirik
+//            ->tenantRegistration(RegisterMerchant::class)
+//            ->tenantProfile(EditMerchantProfile::class)
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\Filament\Resources')
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\Filament\Pages')
+
             ->pages([
                 Dashboard::class,
             ])
@@ -54,6 +64,15 @@ class AdminPanelProvider extends PanelProvider
             ])
             ->authMiddleware([
                 Authenticate::class,
+            ])
+            ->plugins([
+                FilamentTranslatableFieldsPlugin::make()
+                    ->supportedLocales([
+                        'en' => 'English',
+                        'az' => 'Azerbaycan',
+                        'ru' => 'Russian'
+                    ]),
             ]);
+
     }
 }
