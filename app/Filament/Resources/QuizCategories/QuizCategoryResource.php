@@ -8,6 +8,8 @@ use App\Filament\Resources\QuizCategories\Pages\ListQuizCategories;
 use App\Filament\Resources\QuizCategories\Schemas\QuizCategoryForm;
 use App\Filament\Resources\QuizCategories\Tables\QuizCategoriesTable;
 use App\Models\QuizCategory;
+use Filament\Facades\Filament;
+
 use BackedEnum;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
@@ -36,7 +38,11 @@ class QuizCategoryResource extends Resource
     protected static string|BackedEnum|null $navigationIcon = 'heroicon-o-presentation-chart-bar';
 
 
-
+    public static function canViewAny(): bool
+    {
+        $u = Filament::auth()->user();
+        return $u && $u->role === 'super_admin';
+    }
 
     protected static ?string $recordTitleAttribute = 'QuizCategory';
 
