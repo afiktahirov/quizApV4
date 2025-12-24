@@ -20,8 +20,9 @@ class QuizForm
                 Select::make('merchants')
                     ->label('Merchants')
                     ->multiple()
-                    ->relationship('merchants', 'name')  // many‑to‑many
+                    ->relationship('merchants', 'name')
                     ->searchable()
+                    ->visible(fn () => auth()->user()?->role === 'super_admin')
                     ->preload(),
                 TextInput::make('title')->label('Başlıq')->required()->maxLength(255),
                 TextInput::make('total_questions')->numeric()->minValue(1)->default(5)->label('Sual sayı'),

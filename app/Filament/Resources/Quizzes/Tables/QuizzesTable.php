@@ -44,7 +44,7 @@ class QuizzesTable
                 //
             ])
             ->recordActions([
-                EditAction::make(),
+                EditAction::make()->visible(fn () => auth()->user()?->role === 'super_admin'),
 //                ViewAction::make(),
 
             ])

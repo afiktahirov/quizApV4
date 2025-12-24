@@ -9,8 +9,11 @@
         "php": "^8.2",
         "abdulmajeed-jamaan/filament-translatable-tabs": "^4.0",
         "filament/filament": "^4.0",
+        "hexters/hexa-lite": "^3.0",
         "laravel/framework": "^12.0",
+        "laravel/sanctum": "^4.2",
         "laravel/tinker": "^2.10.1",
+        "malzariey/filament-lexical-editor": "^2.0",
         "outerweb/filament-translatable-fields": "^3.0"
     },
     "require-dev": {

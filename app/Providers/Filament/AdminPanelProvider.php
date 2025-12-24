@@ -72,6 +72,7 @@ class AdminPanelProvider extends PanelProvider
                         'az' => 'Azerbaycan',
                         'ru' => 'Russian'
                     ]),
+
             ]);
 
     }

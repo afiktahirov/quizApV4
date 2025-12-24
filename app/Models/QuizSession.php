@@ -7,7 +7,7 @@ class QuizSession extends Model
 {
     use HasFactory;
     public $timestamps = false; // started_at/finished_at sahələri istifadə olunur
-    protected $fillable = ['merchant_id', 'store_id', 'quiz_id', 'user_id', 'started_at', 'finished_at', 'score_pct', 'is_passed', 'ip', 'device_fingerprint', 'channel'];
+    protected $fillable = ['merchant_id', 'store_id', 'quiz_id', 'customer_id', 'started_at', 'finished_at', 'score_pct', 'is_passed', 'ip', 'device_fingerprint', 'channel'];
     protected $casts = [
         'started_at' => 'datetime',
         'finished_at' => 'datetime',
@@ -36,11 +36,10 @@ class QuizSession extends Model
     }
 
 
-    public function user()
+    public function customer()
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(Customer::class);
     }
-
     public function merchants()
     {
         return $this->hasManyThrough(Merchant::class, Quiz::class);

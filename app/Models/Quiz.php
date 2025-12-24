@@ -7,7 +7,7 @@ class Quiz extends Model
 {
     protected $fillable = [
         'merchant_id','store_id','quiz_category_id','title',
-        'total_questions','pass_threshold_pct','time_per_question_sec','status'
+        'total_questions','pass_threshold_pct','time_per_question_sec','status','merchant_id'
     ];
 
     public function merchants()

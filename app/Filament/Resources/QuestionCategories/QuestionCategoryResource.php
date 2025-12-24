@@ -10,6 +10,7 @@ use App\Filament\Resources\QuestionCategories\Schemas\QuestionCategoryForm;
 use App\Filament\Resources\QuestionCategories\Schemas\QuestionCategoryInfolist;
 use App\Filament\Resources\QuestionCategories\Tables\QuestionCategoriesTable;
 use App\Models\QuestionCategory;
+use Filament\Facades\Filament;
 use BackedEnum;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
@@ -21,8 +22,6 @@ class QuestionCategoryResource extends Resource
     protected static ?string $model = QuestionCategory::class;
 
     protected static string|BackedEnum|null $navigationIcon = "heroicon-o-queue-list";
-
-
 
     protected static ?string $recordTitleAttribute = 'name'; // düzəliş burada
 
@@ -37,6 +36,12 @@ class QuestionCategoryResource extends Resource
     public static function form(Schema $schema): Schema
     {
         return QuestionCategoryForm::configure($schema);
+    }
+
+    public static function canViewAny(): bool
+    {
+        $u = Filament::auth()->user();
+        return $u && $u->role === 'super_admin';
     }
 
     public static function infolist(Schema $schema): Schema

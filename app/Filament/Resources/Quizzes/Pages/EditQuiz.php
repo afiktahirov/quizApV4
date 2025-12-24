@@ -13,7 +13,7 @@ class EditQuiz extends EditRecord
     protected function getHeaderActions(): array
     {
         return [
-            DeleteAction::make(),
+            DeleteAction::make()->visible(fn () => auth()->user()?->role === 'super_admin'),
         ];
     }
 

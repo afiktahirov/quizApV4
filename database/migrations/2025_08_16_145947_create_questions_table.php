@@ -8,15 +8,12 @@ return new class extends Migration {
     public function up(): void {
         Schema::create('questions', function (Blueprint $t) {
             $t->id();
-            $t->foreignId('merchant_id')->constrained()->cascadeOnDelete();
-            $t->foreignId('store_id')->nullable()->constrained()->nullOnDelete(); // mağazaya spesifik sual ola bilər
             $t->text('title');
             $t->enum('type',['mcq','true_false'])->default('mcq');
             $t->string('difficulty')->nullable(); // easy/medium/hard və s.
             $t->boolean('is_active')->default(true);
             $t->timestamps();
 
-            $t->index(['merchant_id','store_id','is_active']);
         });
 
         Schema::create('question_options', function (Blueprint $t) {

@@ -8,7 +8,6 @@ return new class extends Migration {
     public function up(): void {
         Schema::create('question_categories', function (Blueprint $t) {
             $t->id();
-            $t->foreignId('merchant_id')->constrained()->cascadeOnDelete(); // tenant
             $t->string('name');
             $t->string('slug')->unique();
             $t->enum('status',['active','inactive'])->default('active');

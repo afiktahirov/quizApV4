@@ -12,11 +12,18 @@ use Illuminate\Support\Collection;
 
 class User extends Authenticatable implements FilamentUser, HasTenants
 {
+
     protected $fillable = ['name', 'email', 'password', 'merchant_id'];
 
     public function teams(): BelongsToMany
     {
         return $this->belongsToMany(Merchant::class);
+    }
+
+
+    public function getIsAdminAttribute(): bool
+    {
+        return in_array($this->role, ['admin', 'super_admin']);
     }
 
     public function getTenants(Panel $panel): Collection
