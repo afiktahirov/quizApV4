@@ -8,6 +8,8 @@
     "require": {
         "php": "^8.2",
         "abdulmajeed-jamaan/filament-translatable-tabs": "^4.0",
+        "caresome/filament-auth-designer": "^2.0",
+        "dotswan/filament-map-picker": "^2.1",
         "filament/filament": "^4.0",
         "hexters/hexa-lite": "^3.0",
         "laravel/framework": "^12.0",

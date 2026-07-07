@@ -60,7 +60,6 @@ class AdResource extends Resource
         return [
             'index' => ListAds::route('/'),
             'create' => CreateAd::route('/create'),
-            'view' => ViewAd::route('/{record}'),
             'edit' => EditAd::route('/{record}/edit'),
         ];
     }

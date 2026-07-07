@@ -22,7 +22,9 @@ use App\Models\Merchant;
 use App\Filament\Pages\Tenancy\RegisterMerchant;
 use App\Filament\Pages\Tenancy\EditMerchantProfile;
 use Outerweb\FilamentTranslatableFields\Filament\Plugins\FilamentTranslatableFieldsPlugin;
-
+use Caresome\FilamentAuthDesigner\AuthDesignerPlugin;
+use Caresome\FilamentAuthDesigner\Data\AuthPageConfig;
+use Caresome\FilamentAuthDesigner\Enums\MediaPosition;
 
 
 class AdminPanelProvider extends PanelProvider
@@ -32,14 +34,11 @@ class AdminPanelProvider extends PanelProvider
         return $panel
             ->default()
             ->id('admin')
-            ->path('admin')
+            ->path('')
             ->login()
             ->colors([
                 'primary' => Color::Amber,
             ])
-//            ->tenant(Merchant::class)  // Burada Tenant modelini Merchant olaraq təyin edirik
-//            ->tenantRegistration(RegisterMerchant::class)
-//            ->tenantProfile(EditMerchantProfile::class)
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\Filament\Resources')
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\Filament\Pages')
 
@@ -72,6 +71,14 @@ class AdminPanelProvider extends PanelProvider
                         'az' => 'Azerbaycan',
                         'ru' => 'Russian'
                     ]),
+                AuthDesignerPlugin::make()
+                    ->login(fn (AuthPageConfig $config) => $config
+                        ->media(asset('assets/background.jpg'),alt: 'asthesmart')
+//                        ->mediaPosition(MediaPosition::Cover)
+                        ->mediaPosition(MediaPosition::Left)
+                        ->mediaSize('50%')
+                        ->blur(2)
+                    )
 
             ]);
 

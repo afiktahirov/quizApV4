@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\v1;
 
 use App\Http\Controllers\Controller;
 use App\Models\Merchant;
+use App\Http\Resources\MerchantResource;
 
 class MerchantController extends Controller
 {
@@ -14,15 +15,10 @@ class MerchantController extends Controller
     {
         $merchants = Merchant::query()
             ->where('status', 'active')
-            ->get([
-                'id',
-                'name',
-                'slug',
-                'bio',
-            ]);
+            ->get(['id','name','slug','bio','photo']);
 
         return response()->json([
-            'merchants' => $merchants,
+            'merchants' => MerchantResource::collection($merchants),
         ]);
     }
 }

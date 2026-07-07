@@ -27,12 +27,21 @@ class AdForm
                     ->label('Başlıq')
                     ->required()
                     ->maxLength(255),
+//                FileUpload::make('image_path')
+//                    ->label('Şəkil')
+//                    ->directory('ads')
+//                    ->columnSpanFull()
+//                    ->imageEditor(2)
+//                    ->image(),
                 FileUpload::make('image_path')
-                    ->label('Şəkil')
+                    ->label('Foto')
+                    ->image()
+                    ->imageEditor() 
                     ->directory('ads')
-                    ->columnSpanFull()
-                    ->imageEditor(2)
-                    ->image(),
+                    ->disk('public')
+                    ->visibility('public')
+                    ->acceptedFileTypes(['image/jpeg','image/png','image/webp'])
+                    ->columnSpanFull(),
                 RichEditor::make('content')
                     ->label('Məzmun')
                     ->columnSpanFull(),
