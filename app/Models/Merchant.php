@@ -12,7 +12,7 @@ class Merchant extends Model
 
     protected $fillable = [
         'name', 'slug', 'status', 'bio', 'photo',
-        'latitude', 'longitude', 'geojson',
+        'latitude', 'longitude', 'geojson', 'address',
         'plan_id', 'subscription_ends_at',
         'coupon_discount_type', 'coupon_value', 'coupon_ttl_hours',
     ];

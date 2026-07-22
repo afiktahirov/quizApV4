@@ -15,11 +15,14 @@ class MerchantResource extends JsonResource
     public function toArray(Request $request): array
     {
         return [
-            'id'    => $this->id,
-            'name'  => $this->name,
-            'slug'  => $this->slug,
-            'bio'   => $this->bio,
-            'photo' => $this->photo ? asset('storage/' . $this->photo) : null,
+            'id'        => $this->id,
+            'name'      => $this->name,
+            'slug'      => $this->slug,
+            'bio'       => $this->bio,
+            'photo'     => $this->photo ? asset('storage/' . $this->photo) : null,
+            'address'   => $this->address,
+            'latitude'  => $this->latitude !== null ? (float) $this->latitude : null,
+            'longitude' => $this->longitude !== null ? (float) $this->longitude : null,
         ];
     }
 }

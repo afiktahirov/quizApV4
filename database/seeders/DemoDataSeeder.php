@@ -262,6 +262,7 @@ class DemoDataSeeder extends Seeder
             [
                 'slug' => 'shirvan-kababxana', 'name' => 'Şirvan Kababxana',
                 'bio'  => 'Bakının mərkəzində ənənəvi Azərbaycan mətbəxi restoranı. Kabab, plov və milli yeməklərin ən dadlı ünvanı.',
+                'address' => 'Nizami küçəsi 45, Bakı', 'latitude' => 40.3725, 'longitude' => 49.8442,
                 'coupon_discount_type' => 'percent', 'coupon_value' => 15, 'coupon_ttl_hours' => 72,
                 'plan_slug' => 'standard', 'sub_end_days' => 45, 'status' => 'active',
                 'history' => ['plan_name' => 'Başlanğıc', 'plan_slug' => 'basic', 'amount' => 29.99, 'months_ago_start' => 6, 'months_ago_end' => 5],
@@ -300,6 +301,7 @@ class DemoDataSeeder extends Seeder
             [
                 'slug' => 'rengareng-kafe', 'name' => 'Rəngarəng Kafe',
                 'bio'  => 'Şirin dadlar və məhəbbətlə hazırlanan kofe növləri ilə tanınan butik kafe.',
+                'address' => 'Neftçilər prospekti 5, Bakı', 'latitude' => 40.3650, 'longitude' => 49.8350,
                 'coupon_discount_type' => 'amount', 'coupon_value' => 3, 'coupon_ttl_hours' => 24,
                 'plan_slug' => 'basic', 'sub_end_days' => 3, 'status' => 'active',
                 'history' => null,
@@ -336,6 +338,7 @@ class DemoDataSeeder extends Seeder
             [
                 'slug' => 'fitlife-idman-zali', 'name' => 'FitLife İdman Zalı',
                 'bio'  => 'Müasir avadanlıqlarla təchiz olunmuş, təcrübəli məşqçi heyəti olan idman zalı.',
+                'address' => 'H. Zərdabi prospekti 88, Bakı', 'latitude' => 40.3960, 'longitude' => 49.8080,
                 'coupon_discount_type' => 'percent', 'coupon_value' => 20, 'coupon_ttl_hours' => 168,
                 'plan_slug' => 'premium', 'sub_end_days' => 300, 'status' => 'active',
                 'history' => null,
@@ -372,6 +375,7 @@ class DemoDataSeeder extends Seeder
             [
                 'slug' => 'bella-gozellik-salonu', 'name' => 'Bella Gözəllik Salonu',
                 'bio'  => 'Saç, dırnaq və dəri baxımı üzrə peşəkar gözəllik salonu.',
+                'address' => 'Bülbül prospekti 30, Bakı', 'latitude' => 40.3660, 'longitude' => 49.8480,
                 'coupon_discount_type' => 'percent', 'coupon_value' => 12, 'coupon_ttl_hours' => 48,
                 'plan_slug' => 'basic', 'sub_end_days' => -10, 'status' => 'inactive',
                 'history' => null,
@@ -404,6 +408,7 @@ class DemoDataSeeder extends Seeder
             [
                 'slug' => 'techmarket-elektronika', 'name' => 'TechMarket Elektronika',
                 'bio'  => 'Son texnologiya smartfon, noutbuk və məişət texnikası satışı.',
+                'address' => '28 Mall, 28 May küçəsi, Bakı', 'latitude' => 40.3900, 'longitude' => 49.8560,
                 'coupon_discount_type' => 'amount', 'coupon_value' => 25, 'coupon_ttl_hours' => 96,
                 'plan_slug' => 'standard', 'sub_end_days' => 1, 'status' => 'active',
                 'history' => null,
@@ -448,6 +453,9 @@ class DemoDataSeeder extends Seeder
                 'name'                 => $c['name'],
                 'status'               => $c['status'],
                 'bio'                  => $c['bio'],
+                'address'              => $c['address'],
+                'latitude'             => $c['latitude'],
+                'longitude'            => $c['longitude'],
                 'coupon_discount_type' => $c['coupon_discount_type'],
                 'coupon_value'         => $c['coupon_value'],
                 'coupon_ttl_hours'     => $c['coupon_ttl_hours'],

@@ -15,7 +15,7 @@ class MerchantController extends Controller
     {
         $merchants = Merchant::query()
             ->subscribed()
-            ->get(['id', 'name', 'slug', 'bio', 'photo', 'latitude', 'longitude']);
+            ->get(['id', 'name', 'slug', 'bio', 'photo', 'address', 'latitude', 'longitude']);
 
         return response()->json([
             'merchants' => MerchantResource::collection($merchants),
