@@ -2,7 +2,6 @@
 
 namespace App\Filament\Resources\Users;
 
-use Filament\Facades\Filament;
 use App\Filament\Resources\Users\Pages\CreateUser;
 use App\Filament\Resources\Users\Pages\EditUser;
 use App\Filament\Resources\Users\Pages\ListUsers;
@@ -12,27 +11,19 @@ use App\Filament\Resources\Users\Schemas\UserInfolist;
 use App\Filament\Resources\Users\Tables\UsersTable;
 use App\Models\User;
 use BackedEnum;
+use Filament\Facades\Filament;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
-use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
-use Hexters\HexaLite\HasHexaLite;
+use Illuminate\Database\Eloquent\Builder;
 
 class UserResource extends Resource
 {
-
     protected static ?string $model = User::class;
-
-    protected static bool $isScopedToTenant = false;
-
-
 
     protected static string|BackedEnum|null $navigationIcon = 'heroicon-o-user-circle';
 
-
-    protected static ?string $recordTitleAttribute = 'User';
-
-
+    protected static ?string $recordTitleAttribute = 'name';
 
     public static function getLabel(): string
     {
@@ -41,9 +32,8 @@ class UserResource extends Resource
 
     public static function getPluralLabel(): string
     {
-        return 'İştifadəçilər';
+        return 'İstifadəçilər';
     }
-
 
     public static function form(Schema $schema): Schema
     {
@@ -62,25 +52,54 @@ class UserResource extends Resource
 
     public static function getRelations(): array
     {
-        return [
-            //
-        ];
+        return [];
     }
 
+    /**
+     * Super admin bütün istifadəçiləri, merchant_admin öz komandasını
+     * (məs. kassirlərini) idarə edir.
+     */
     public static function canViewAny(): bool
     {
-        $u = Filament::auth()->user();
-        return $u && $u->role === 'super_admin';
+        $user = Filament::auth()->user();
+
+        return (bool) ($user?->is_admin || $user?->isMerchantAdmin());
     }
 
+    public static function getEloquentQuery(): Builder
+    {
+        $query = parent::getEloquentQuery();
+        $user  = Filament::auth()->user();
+
+        if ($user?->is_admin) {
+            return $query;
+        }
+
+        return $query->where('merchant_id', $user?->merchant_id);
+    }
+
+    public static function canDelete($record): bool
+    {
+        $user = Filament::auth()->user();
+
+        // özünü silmək olmaz; merchant_admin yalnız öz kassirlərini silə bilər
+        if ($record->id === $user?->id) {
+            return false;
+        }
+
+        return $user?->is_admin
+            || ($user?->isMerchantAdmin()
+                && $record->merchant_id === $user->merchant_id
+                && $record->role === User::ROLE_CASHIER);
+    }
 
     public static function getPages(): array
     {
         return [
-            'index' => ListUsers::route('/'),
+            'index'  => ListUsers::route('/'),
             'create' => CreateUser::route('/create'),
-            'view' => ViewUser::route('/{record}'),
-            'edit' => EditUser::route('/{record}/edit'),
+            'view'   => ViewUser::route('/{record}'),
+            'edit'   => EditUser::route('/{record}/edit'),
         ];
     }
 }

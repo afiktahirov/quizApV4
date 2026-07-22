@@ -12,17 +12,25 @@ class CustomerForm
         return $schema
             ->components([
                 TextInput::make('name')
+                    ->label('Ad')
                     ->required(),
                 TextInput::make('phone')
+                    ->label('Telefon')
                     ->tel()
+                    ->unique(ignoreRecord: true)
                     ->required(),
                 TextInput::make('email')
-                    ->label('Email address')
+                    ->label('Email')
                     ->email()
+                    ->unique(ignoreRecord: true)
                     ->default(null),
                 TextInput::make('password')
+                    ->label('Şifrə')
                     ->password()
-                    ->required(),
+                    ->revealable()
+                    // Model-də 'hashed' cast var — burada yalnız dolu olduqda göndəririk
+                    ->dehydrated(fn ($state) => filled($state))
+                    ->required(fn (string $context) => $context === 'create'),
             ]);
     }
 }

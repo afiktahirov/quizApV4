@@ -2,12 +2,10 @@
 
 namespace App\Filament\Resources\QuizSessions\Tables;
 
-use Filament\Actions\BulkActionGroup;
-use Filament\Actions\DeleteBulkAction;
-use Filament\Actions\EditAction;
 use Filament\Actions\ViewAction;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Filters\TernaryFilter;
 use Filament\Tables\Table;
 
 class QuizSessionsTable
@@ -16,26 +14,27 @@ class QuizSessionsTable
     {
         return $table
             ->columns([
-                // Mağaza (relation)
-                TextColumn::make('store.name')
-                    ->label('Mağaza')
+                TextColumn::make('customer.name')
+                    ->label('Müştəri')
                     ->sortable()
                     ->searchable(),
 
-                // Quiz (relation)
+                TextColumn::make('customer.phone')
+                    ->label('Telefon')
+                    ->searchable()
+                    ->toggleable(),
+
                 TextColumn::make('quiz.title')
                     ->label('Kampaniya')
                     ->sortable()
                     ->searchable()
                     ->limit(60),
 
-                // İstifadəçi (relation)
-                TextColumn::make('user.name')
-                    ->label('İstifadəçi')
+                TextColumn::make('store.name')
+                    ->label('Filial')
                     ->sortable()
-                    ->searchable(),
+                    ->toggleable(),
 
-                // Başlama / Bitmə
                 TextColumn::make('started_at')
                     ->label('Başlama')
                     ->dateTime('d.m.Y H:i')
@@ -46,45 +45,31 @@ class QuizSessionsTable
                     ->dateTime('d.m.Y H:i')
                     ->sortable(),
 
-                // Bal faizi
                 TextColumn::make('score_pct')
                     ->label('Bal %')
                     ->numeric()
                     ->suffix('%')
                     ->sortable(),
 
-                // Keçid vəziyyəti
                 IconColumn::make('is_passed')
                     ->label('Keçib?')
                     ->boolean(),
 
-                // Kanal / IP / Cihaz izi
                 TextColumn::make('channel')
                     ->label('Kanal')
-                    ->searchable()
-                    ->toggleable(),
+                    ->toggleable(isToggledHiddenByDefault: true),
 
                 TextColumn::make('ip')
                     ->label('IP')
-                    ->searchable()
-                    ->toggleable(),
-
-                TextColumn::make('device_fingerprint')
-                    ->label('Cihaz izi')
-                    ->searchable()
-                    ->toggleable(),
+                    ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
-                // istəsən bura keçid üçün TernaryFilter, tarix aralığı və s. əlavə edə bilərsən
+                TernaryFilter::make('is_passed')->label('Keçib?'),
             ])
             ->recordActions([
                 ViewAction::make(),
-                EditAction::make(),
             ])
-            ->toolbarActions([
-                BulkActionGroup::make([
-                    DeleteBulkAction::make(),
-                ]),
-            ]);
+            ->toolbarActions([])
+            ->defaultSort('started_at', 'desc');
     }
 }

@@ -11,14 +11,35 @@ use App\Filament\Resources\Ads\Schemas\AdInfolist;
 use App\Filament\Resources\Ads\Tables\AdsTable;
 use App\Models\Ad;
 use BackedEnum;
+use Filament\Facades\Filament;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 
 class AdResource extends Resource
 {
+    use \App\Filament\Concerns\EnforcesPlanLimit;
+
     protected static ?string $model = Ad::class;
+
+    public static function canCreate(): bool
+    {
+        return static::canCreateWithinPlan('ads');
+    }
+
+    public static function getEloquentQuery(): Builder
+    {
+        $query = parent::getEloquentQuery();
+        $user  = Filament::auth()->user();
+
+        if ($user?->is_admin) {
+            return $query;
+        }
+
+        return $query->where('merchant_id', $user?->merchant_id);
+    }
 
     protected static string|BackedEnum|null $navigationIcon = 'heroicon-o-megaphone';
 

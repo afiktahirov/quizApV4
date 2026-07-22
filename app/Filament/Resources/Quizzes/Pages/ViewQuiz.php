@@ -13,7 +13,7 @@ class ViewQuiz extends ViewRecord
     protected function getHeaderActions(): array
     {
         return [
-            EditAction::make()->visible(fn () => auth()->user()?->role === 'super_admin'),
+            EditAction::make()->visible(fn () => QuizResource::ownsRecord($this->record)),
         ];
     }
 }

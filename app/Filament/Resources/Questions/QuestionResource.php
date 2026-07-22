@@ -11,25 +11,23 @@ use App\Filament\Resources\Questions\Schemas\QuestionInfolist;
 use App\Filament\Resources\Questions\Tables\QuestionsTable;
 use App\Models\Question;
 use BackedEnum;
+use Filament\Facades\Filament;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
-use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
 use Illuminate\Contracts\Support\Htmlable;
 use Illuminate\Database\Eloquent\Model as EloquentModel;
 use Illuminate\Database\Eloquent\Builder;
 
-
-
 class QuestionResource extends Resource
 {
+    use \App\Filament\Concerns\EnforcesPlanLimit;
+
     protected static ?string $model = Question::class;
 
-    protected static ?string $navigationLabel = 'Suallarım';
+    protected static ?string $navigationLabel = 'Suallar';
 
-    protected static bool $isScopedToTenant = false;
-
-
+    protected static string|BackedEnum|null $navigationIcon = 'heroicon-o-academic-cap';
 
     public static function getLabel(): string
     {
@@ -40,9 +38,6 @@ class QuestionResource extends Resource
     {
         return 'Suallar';
     }
-
-    protected static string|BackedEnum|null $navigationIcon = 'heroicon-o-academic-cap';
-
 
     public static function form(Schema $schema): Schema
     {
@@ -66,7 +61,6 @@ class QuestionResource extends Resource
         return $t !== null ? (string) $t : null;
     }
 
-
     public static function infolist(Schema $schema): Schema
     {
         return QuestionInfolist::configure($schema);
@@ -79,45 +73,64 @@ class QuestionResource extends Resource
 
     public static function getRelations(): array
     {
-        return [
-            //
-        ];
+        return [];
     }
 
+    /**
+     * Super admin bütün sualları görür.
+     * Merchant istifadəçisi: öz sualları + qlobal hazır baza.
+     */
     public static function getEloquentQuery(): Builder
     {
         $query = parent::getEloquentQuery();
+        $user  = Filament::auth()->user();
 
-        // Admin-ə bütün suallar lazım olacaq
-        if (auth()->user()->is_admin ?? false) {
+        if ($user?->is_admin) {
             return $query;
         }
 
-        // Merchant user yalnız öz quizzinə aid sualları görə bilər
-        $merchantId = auth()->user()->merchant_id;
-
-        return $query->whereExists(function ($subQuery) use ($merchantId) {
-            $subQuery->selectRaw(1)
-                ->from('quiz_question_maps as qqm')
-                ->join('merchant_quiz as mq', 'mq.quiz_id', '=', 'qqm.quiz_id')
-                ->whereColumn('qqm.question_id', 'questions.id')
-                ->where('mq.merchant_id', $merchantId);
+        return $query->where(function (Builder $q) use ($user) {
+            $q->whereNull('merchant_id')
+              ->orWhere('merchant_id', $user?->merchant_id);
         });
     }
 
-    public static function afterCreate(Question $question)
+    /** Sualın sahibi (qlobal sualları yalnız super admin idarə edir) */
+    public static function ownsRecord($record): bool
     {
-        // Burada `merchant_id`-ni istifadəçinin `merchant_id`-si ilə doldururuq
-        $question->merchant_id = auth()->user()->merchant_id;
-        $question->save();
+        $user = Filament::auth()->user();
+
+        if ($user?->is_admin) {
+            return true;
+        }
+
+        return $record?->merchant_id !== null
+            && $record->merchant_id === $user?->merchant_id;
     }
+
+    public static function canCreate(): bool
+    {
+        // merchant öz sual limitini keçə bilməz (qlobal baza sayılmır)
+        return static::canCreateWithinPlan('questions');
+    }
+
+    public static function canEdit($record): bool
+    {
+        return static::ownsRecord($record);
+    }
+
+    public static function canDelete($record): bool
+    {
+        return static::ownsRecord($record);
+    }
+
     public static function getPages(): array
     {
         return [
-            'index' => ListQuestions::route('/'),
+            'index'  => ListQuestions::route('/'),
             'create' => CreateQuestion::route('/create'),
-            'view' => ViewQuestion::route('/{record}'),
-            'edit' => EditQuestion::route('/{record}/edit'),
+            'view'   => ViewQuestion::route('/{record}'),
+            'edit'   => EditQuestion::route('/{record}/edit'),
         ];
     }
 }

@@ -46,7 +46,7 @@ class MerchantResource extends Resource
     public static function getRelations(): array
     {
         return [
-            //
+            \App\Filament\Resources\Merchants\RelationManagers\SubscriptionsRelationManager::class,
         ];
     }
 

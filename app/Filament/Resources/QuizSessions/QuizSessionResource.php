@@ -2,8 +2,6 @@
 
 namespace App\Filament\Resources\QuizSessions;
 
-use App\Filament\Resources\QuizSessions\Pages\CreateQuizSession;
-use App\Filament\Resources\QuizSessions\Pages\EditQuizSession;
 use App\Filament\Resources\QuizSessions\Pages\ListQuizSessions;
 use App\Filament\Resources\QuizSessions\Pages\ViewQuizSession;
 use App\Filament\Resources\QuizSessions\Schemas\QuizSessionForm;
@@ -11,12 +9,11 @@ use App\Filament\Resources\QuizSessions\Schemas\QuizSessionInfolist;
 use App\Filament\Resources\QuizSessions\Tables\QuizSessionsTable;
 use App\Models\QuizSession;
 use BackedEnum;
+use Filament\Facades\Filament;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
-use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
-
 
 class QuizSessionResource extends Resource
 {
@@ -24,9 +21,9 @@ class QuizSessionResource extends Resource
 
     protected static ?string $navigationLabel = 'Kampaniya iştirakçıları';
 
-
     protected static string|BackedEnum|null $navigationIcon = 'heroicon-o-user-group';
 
+    protected static ?string $recordTitleAttribute = 'id';
 
     public static function getLabel(): string
     {
@@ -37,10 +34,6 @@ class QuizSessionResource extends Resource
     {
         return 'İştirakçılar';
     }
-
-
-
-    protected static ?string $recordTitleAttribute = 'QuizSession';
 
     public static function form(Schema $schema): Schema
     {
@@ -59,39 +52,42 @@ class QuizSessionResource extends Resource
 
     public static function getRelations(): array
     {
-        return [
-            //
-        ];
+        return [];
     }
-
 
     public static function getEloquentQuery(): Builder
     {
-        $query = parent::getEloquentQuery();
+        $query = parent::getEloquentQuery()->with(['quiz', 'customer', 'store']);
+        $user  = Filament::auth()->user();
 
-        // Admin-ə bütün iştirakçılar lazım olacaq
-        if (auth()->user()->is_admin ?? false) {
+        if ($user?->is_admin) {
             return $query;
         }
 
-        // Merchant user yalnız öz merchant_id ilə əlaqəli olanları görəcək
-        $merchantId = auth()->user()->merchant_id;
+        return $query->where('merchant_id', $user?->merchant_id);
+    }
 
-        // İştirakçıların yalnız seçilmiş merchant-ın quizzlərindəki nəticələrini göstəririk
-        return $query->whereHas('quiz', function (Builder $q) use ($merchantId) {
-            $q->whereHas('merchants', function (Builder $q) use ($merchantId) {
-                $q->where('merchant_id', $merchantId);
-            });
-        });
+    // Sessiyalar yalnız oxumaq üçündür — nəticələr paneldən dəyişdirilə bilməz
+    public static function canCreate(): bool
+    {
+        return false;
+    }
+
+    public static function canEdit($record): bool
+    {
+        return false;
+    }
+
+    public static function canDelete($record): bool
+    {
+        return Filament::auth()->user()?->is_admin ?? false;
     }
 
     public static function getPages(): array
     {
         return [
             'index' => ListQuizSessions::route('/'),
-//            'create' => CreateQuizSession::route('/create'),
-            'view' => ViewQuizSession::route('/{record}'),
-//            'edit' => EditQuizSession::route('/{record}/edit'),
+            'view'  => ViewQuizSession::route('/{record}'),
         ];
     }
 }

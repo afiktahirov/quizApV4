@@ -5,6 +5,7 @@ namespace App\Filament\Resources\Merchants\Schemas;
 use App\Models\Merchant;
 use Dotswan\MapPicker\Fields\Map;
 use Filament\Actions\Action;
+use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\RichEditor;
 use Filament\Forms\Components\Select;
@@ -33,6 +34,44 @@ class MerchantForm
                     'inactive' => 'Inactive',
                 ])
                 ->default('active')
+                ->required(),
+
+            // ---- Abunəlik (yalnız super admin idarə edir) ----
+            Select::make('plan_id')
+                ->label('Paket')
+                ->relationship('plan', 'name')
+                ->searchable()
+                ->preload()
+                ->helperText('Abunəliyi düzgün uzatmaq üçün siyahıdakı "Abunə təyin et / uzat" düyməsindən istifadə edin.')
+                ->nullable(),
+
+            DateTimePicker::make('subscription_ends_at')
+                ->label('Abunəliyin bitmə tarixi')
+                ->helperText('Boş = limitsiz. Tarix keçibsə, kampaniyalar müştərilərə görünmür.')
+                ->nullable(),
+
+            // ---- Kupon parametrləri ----
+            Select::make('coupon_discount_type')
+                ->label('Endirim növü')
+                ->options([
+                    'percent' => 'Faiz (%)',
+                    'amount'  => 'Məbləğ (AZN)',
+                ])
+                ->default('percent')
+                ->required(),
+
+            TextInput::make('coupon_value')
+                ->label('Endirim dəyəri')
+                ->numeric()
+                ->minValue(0)
+                ->default(10)
+                ->required(),
+
+            TextInput::make('coupon_ttl_hours')
+                ->label('Kuponun etibarlılıq müddəti (saat)')
+                ->numeric()
+                ->minValue(1)
+                ->default(48)
                 ->required(),
 
             RichEditor::make('bio')

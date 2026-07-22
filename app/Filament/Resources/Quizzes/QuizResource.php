@@ -12,21 +12,23 @@ use App\Filament\Resources\Quizzes\RelationManagers\QuestionsRelationManager;
 use App\Filament\Resources\Quizzes\RelationManagers\SessionsRelationManager;
 use App\Models\Quiz;
 use BackedEnum;
+use Filament\Facades\Filament;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
-use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 
 class QuizResource extends Resource
 {
+    use \App\Filament\Concerns\EnforcesPlanLimit;
+
     protected static ?string $model = Quiz::class;
 
     protected static string|BackedEnum|null $navigationIcon = 'heroicon-o-megaphone';
 
     protected static ?string $navigationLabel = 'Kampanyalar';
 
-
+    protected static ?string $recordTitleAttribute = 'title';
 
     public static function getLabel(): string
     {
@@ -37,8 +39,6 @@ class QuizResource extends Resource
     {
         return 'Kampanyalar';
     }
-
-    protected static ?string $recordTitleAttribute = 'Quiz';
 
     public static function form(Schema $schema): Schema
     {
@@ -58,61 +58,51 @@ class QuizResource extends Resource
         ];
     }
 
-
-
     public static function getEloquentQuery(): Builder
     {
         $query = parent::getEloquentQuery();
+        $user  = Filament::auth()->user();
 
-        // Admin hər şeyi görsün
-        if (auth()->user()->is_admin ?? false) {
+        // Super admin hər şeyi görür, merchant yalnız öz kampaniyalarını
+        if ($user?->is_admin) {
             return $query;
         }
 
-        $merchantId = auth()->user()->merchant_id;
-
-        return $query->whereHas('merchants', fn ($q) =>
-        $q->where('merchant_id', $merchantId)
-        );
+        return $query->where('merchant_id', $user?->merchant_id);
     }
 
     public static function getPages(): array
     {
         return [
-            'index' => ListQuizzes::route('/'),
+            'index'  => ListQuizzes::route('/'),
             'create' => CreateQuiz::route('/create'),
-            'edit' => EditQuiz::route('/{record}/edit'),
-            'view' => ViewQuiz::route('/{record}'),
+            'edit'   => EditQuiz::route('/{record}/edit'),
+            'view'   => ViewQuiz::route('/{record}'),
         ];
     }
 
-
-
-    public static function canViewAny(): bool
+    /** Bu istifadəçi bu kampaniyanı idarə edə bilər? */
+    public static function ownsRecord($record): bool
     {
-        return true; // Hər kəs görə bilər (list səhifəsi)
-    }
+        $user = Filament::auth()->user();
 
-    public static function canView($record): bool
-    {
-        return true; // Hər kəs baxa bilər (view səhifəsi)
+        return (bool) ($user?->is_admin
+            || ($user?->merchant_id !== null && $record?->merchant_id === $user->merchant_id));
     }
 
     public static function canCreate(): bool
     {
-        return auth()->user()?->role === 'super_admin'; // Yalnız admin yarada bilər
+        // merchant_admin: abunəlik aktiv VƏ paket kampaniya limiti dolmayıbsa
+        return static::canCreateWithinPlan('quizzes');
     }
 
     public static function canEdit($record): bool
     {
-        return auth()->user()?->role === 'super_admin'; // Yalnız admin dəyişə bilər
+        return static::ownsRecord($record);
     }
 
     public static function canDelete($record): bool
     {
-        return auth()->user()?->role === 'super_admin'; // Yalnız admin silə bilər
+        return static::ownsRecord($record);
     }
-    
-
-
 }

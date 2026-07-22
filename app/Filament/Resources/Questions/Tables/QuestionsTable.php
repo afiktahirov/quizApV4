@@ -2,12 +2,13 @@
 
 namespace App\Filament\Resources\Questions\Tables;
 
+use App\Filament\Resources\Questions\QuestionResource;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Actions\ViewAction;
+use Filament\Facades\Filament;
 use Filament\Tables\Table;
-use Filament\Tables;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Columns\BadgeColumn;
 use Filament\Tables\Columns\ToggleColumn;
@@ -20,23 +21,23 @@ class QuestionsTable
     {
         return $table
             ->columns([
-                // Sual Başlığı (JSON/translatable üçün aktiv dilə görə göstər)
                 TextColumn::make('title')
                     ->label('Sual Başlığı')
                     ->searchable()
-                    ->limit(60)
                     ->sortable()
                     ->state(function ($record) {
-                        // title JSON-dursa, "az" açarını götür
                         if (is_array($record->title)) {
-                            return $record->title['az'] ?? '';
+                            return $record->title['az'] ?? reset($record->title) ?? '';
                         }
-
                         return $record->title;
                     })
                     ->limit(60),
 
-                // Sual Növü (badge + enum)
+                BadgeColumn::make('merchant_id')
+                    ->label('Mənbə')
+                    ->state(fn ($record) => $record->merchant_id === null ? 'Hazır baza' : ($record->merchant?->name ?? 'Öz sualı'))
+                    ->colors(['info']),
+
                 BadgeColumn::make('type')
                     ->label('Sual Növü')
                     ->colors([
@@ -44,20 +45,17 @@ class QuestionsTable
                         'success' => 'true_false',
                     ])
                     ->formatStateUsing(fn (string $state): string => match ($state) {
-                        'mcq' => 'Çoxseçimli',
+                        'mcq'        => 'Çoxseçimli',
                         'true_false' => 'Doğru / Yanlış',
-                        default => ucfirst($state),
+                        default      => ucfirst($state),
                     })
                     ->sortable(),
 
-
-                // Variant sayı (hasMany count)
                 TextColumn::make('options_count')
                     ->label('Variant sayı')
-                    ->counts('options') // Filament v4 relationship count
+                    ->counts('options')
                     ->sortable(),
 
-                // Düzgün cavab(lar)
                 TextColumn::make('correct_options')
                     ->label('Düzgün cavab(lar)')
                     ->state(function ($record) {
@@ -77,37 +75,46 @@ class QuestionsTable
                     ->wrap()
                     ->limit(80),
 
-
-
-                // Aktivlik
                 ToggleColumn::make('is_active')
                     ->label('Aktiv')
-                    ->sortable(),
+                    ->sortable()
+                    ->disabled(fn ($record) => ! QuestionResource::ownsRecord($record)),
             ])
             ->filters([
                 SelectFilter::make('type')
                     ->label('Sual Növü')
                     ->options([
-                        'mcq' => 'Çox Seçimli',
+                        'mcq'        => 'Çox Seçimli',
                         'true_false' => 'Doğru/Yanlış',
                     ]),
                 SelectFilter::make('difficulty')
                     ->label('Çətinlik')
                     ->options([
-                        'easy' => 'Asan',
+                        'easy'   => 'Asan',
                         'medium' => 'Orta',
-                        'hard' => 'Çətin',
+                        'hard'   => 'Çətin',
                     ]),
                 TernaryFilter::make('is_active')
                     ->label('Aktiv'),
+                TernaryFilter::make('merchant_id')
+                    ->label('Mənbə')
+                    ->nullable()
+                    ->trueLabel('Öz suallarım')
+                    ->falseLabel('Hazır baza')
+                    ->queries(
+                        true: fn ($query) => $query->whereNotNull('merchant_id'),
+                        false: fn ($query) => $query->whereNull('merchant_id'),
+                        blank: fn ($query) => $query,
+                    ),
             ])
             ->recordActions([
                 ViewAction::make(),
-                EditAction::make(),
+                EditAction::make()->visible(fn ($record) => QuestionResource::ownsRecord($record)),
             ])
             ->toolbarActions([
                 BulkActionGroup::make([
-                    DeleteBulkAction::make(),
+                    DeleteBulkAction::make()
+                        ->visible(fn () => Filament::auth()->user()?->is_admin ?? false),
                 ]),
             ]);
     }

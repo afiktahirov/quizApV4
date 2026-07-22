@@ -1,14 +1,14 @@
 <?php
 
-namespace App\Filament\Resources\Ads\Pages;
+namespace App\Filament\Resources\Stores\Pages;
 
-use App\Filament\Resources\Ads\AdResource;
+use App\Filament\Resources\Stores\StoreResource;
 use Filament\Facades\Filament;
 use Filament\Resources\Pages\CreateRecord;
 
-class CreateAd extends CreateRecord
+class CreateStore extends CreateRecord
 {
-    protected static string $resource = AdResource::class;
+    protected static string $resource = StoreResource::class;
 
     protected function mutateFormDataBeforeCreate(array $data): array
     {

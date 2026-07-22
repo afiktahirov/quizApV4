@@ -4,7 +4,6 @@ namespace App\Filament\Resources\Quizzes\Pages;
 
 use App\Filament\Resources\Quizzes\QuizResource;
 use Filament\Actions\CreateAction;
-use Filament\Actions\ViewAction;
 use Filament\Resources\Pages\ListRecords;
 
 class ListQuizzes extends ListRecords
@@ -15,8 +14,7 @@ class ListQuizzes extends ListRecords
     {
         return [
             CreateAction::make()
-                ->visible(fn () => auth()->user()?->role === 'super_admin'),
-
+                ->visible(fn () => QuizResource::canCreate()),
         ];
     }
 }

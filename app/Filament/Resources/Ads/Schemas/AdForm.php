@@ -19,10 +19,11 @@ class AdForm
         return $schema
             ->components([
                 Select::make('merchant_id')
-                    ->label('Mağaza')
+                    ->label('Müəssisə')
                     ->options(Merchant::query()->pluck('name', 'id'))
                     ->searchable()
-                    ->nullable(),
+                    ->nullable()
+                    ->visible(fn () => \Filament\Facades\Filament::auth()->user()?->is_admin ?? false),
                 TextInput::make('title')
                     ->label('Başlıq')
                     ->required()
