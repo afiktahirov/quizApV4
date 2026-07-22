@@ -14,6 +14,7 @@ use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 
 class MerchantResource extends Resource
 {
@@ -54,12 +55,35 @@ class MerchantResource extends Resource
         ];
     }
 
+    /** Super admin hamısını, merchant_admin yalnız öz mağazasını idarə edir. */
     public static function canViewAny(): bool
     {
         $u = Filament::auth()->user();
-        return $u && $u->role === 'super_admin';
+        return $u && in_array($u->role, ['super_admin', 'merchant_admin'], true);
     }
 
+    public static function getEloquentQuery(): Builder
+    {
+        $query = parent::getEloquentQuery();
+        $user  = Filament::auth()->user();
+
+        if ($user?->is_admin) {
+            return $query;
+        }
+
+        return $query->where('id', $user?->merchant_id);
+    }
+
+    // Yeni mağaza yalnız super admin tərəfindən yaradılır/silinir
+    public static function canCreate(): bool
+    {
+        return Filament::auth()->user()?->is_admin ?? false;
+    }
+
+    public static function canDelete($record): bool
+    {
+        return Filament::auth()->user()?->is_admin ?? false;
+    }
 
     public static function getPages(): array
     {

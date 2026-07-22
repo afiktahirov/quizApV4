@@ -4,6 +4,7 @@ namespace App\Filament\Resources\Merchants\Pages;
 
 use App\Filament\Resources\Merchants\MerchantResource;
 use Filament\Actions\DeleteAction;
+use Filament\Facades\Filament;
 use Filament\Resources\Pages\EditRecord;
 
 class EditMerchant extends EditRecord
@@ -13,7 +14,8 @@ class EditMerchant extends EditRecord
     protected function getHeaderActions(): array
     {
         return [
-            DeleteAction::make(),
+            DeleteAction::make()
+                ->visible(fn () => Filament::auth()->user()?->is_admin ?? false),
         ];
     }
 }

@@ -58,6 +58,7 @@ class MerchantsTable
                     ->label('Abunə təyin/uzat')
                     ->icon('heroicon-o-rectangle-stack')
                     ->color('success')
+                    ->visible(fn () => Filament::auth()->user()?->is_admin ?? false)
                     ->schema([
                         Select::make('plan_id')
                             ->label('Paket')
@@ -94,6 +95,7 @@ class MerchantsTable
                     ->label(fn (Merchant $record) => $record->status === 'active' ? 'Blokla' : 'Bloku aç')
                     ->icon(fn (Merchant $record) => $record->status === 'active' ? 'heroicon-o-lock-closed' : 'heroicon-o-lock-open')
                     ->color(fn (Merchant $record) => $record->status === 'active' ? 'danger' : 'gray')
+                    ->visible(fn () => Filament::auth()->user()?->is_admin ?? false)
                     ->requiresConfirmation()
                     ->action(function (Merchant $record) {
                         $svc = app(SubscriptionService::class);
@@ -111,7 +113,8 @@ class MerchantsTable
             ])
             ->toolbarActions([
                 BulkActionGroup::make([
-                    DeleteBulkAction::make(),
+                    DeleteBulkAction::make()
+                        ->visible(fn () => Filament::auth()->user()?->is_admin ?? false),
                 ]),
             ]);
     }

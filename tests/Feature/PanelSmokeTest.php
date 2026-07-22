@@ -55,8 +55,9 @@ class PanelSmokeTest extends TestCase
         $response = $this->actingAs($user)->get('/' . $slug);
 
         // super_admin-only səhifələr merchant üçün 403 qaytarmalıdır,
-        // qalanları uğurla açılmalıdır
-        $adminOnly = ['merchants', 'customers', 'quiz-categories', 'question-categories', 'plans'];
+        // qalanları uğurla açılmalıdır. 'merchants' merchant_admin-ə açıqdır
+        // (öz mağazasının ünvan/profil məlumatını özü idarə edir).
+        $adminOnly = ['customers', 'quiz-categories', 'question-categories', 'plans'];
 
         if (in_array($slug, $adminOnly, true)) {
             $response->assertForbidden();
