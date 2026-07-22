@@ -22,6 +22,10 @@ class QuizCategoryResource extends Resource
 
     protected static ?string $navigationLabel = 'Kampanya kateqoriyaları';
 
+    protected static string|\UnitEnum|null $navigationGroup = 'Kampaniyalar';
+
+    protected static ?int $navigationSort = 1;
+
 
 
     public static function getLabel(): string

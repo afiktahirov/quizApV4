@@ -29,6 +29,10 @@ class QuestionCategoryResource extends Resource
 
     protected static ?string $navigationLabel = 'Sual Kateqoriyaları';
 
+    protected static string|\UnitEnum|null $navigationGroup = 'Suallar';
+
+    protected static ?int $navigationSort = 1;
+
     public static function getLabel(): string      { return 'Kateqoriya'; }
     public static function getPluralLabel(): string { return 'Kateqoriyalar'; }
 

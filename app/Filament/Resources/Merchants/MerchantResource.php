@@ -22,6 +22,10 @@ class MerchantResource extends Resource
     protected static ?string $recordTitleAttribute = 'merchant';
     protected static string|BackedEnum|null $navigationIcon = 'heroicon-o-shopping-bag';
 
+    protected static string|\UnitEnum|null $navigationGroup = 'Müəssisə';
+
+    protected static ?int $navigationSort = 1;
+
 
     public static function getLabel(): string
     {

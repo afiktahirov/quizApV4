@@ -24,6 +24,10 @@ class AdResource extends Resource
 
     protected static ?string $model = Ad::class;
 
+    protected static string|\UnitEnum|null $navigationGroup = 'Marketinq';
+
+    protected static ?int $navigationSort = 1;
+
     public static function canCreate(): bool
     {
         return static::canCreateWithinPlan('ads');

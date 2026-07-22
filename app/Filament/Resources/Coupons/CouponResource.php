@@ -26,6 +26,10 @@ class CouponResource extends Resource
 
     protected static ?string $navigationLabel = 'Kuponlar';
 
+    protected static string|\UnitEnum|null $navigationGroup = 'Marketinq';
+
+    protected static ?int $navigationSort = 2;
+
     protected static ?string $recordTitleAttribute = 'code';
 
     public static function getLabel(): string

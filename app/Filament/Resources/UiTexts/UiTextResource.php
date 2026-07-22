@@ -26,6 +26,10 @@ class UiTextResource extends Resource
 
     protected static ?string $navigationLabel = 'Sayt mətnləri';
 
+    protected static string|\UnitEnum|null $navigationGroup = 'Sistem';
+
+    protected static ?int $navigationSort = 1;
+
     protected static ?string $recordTitleAttribute = 'key';
 
     public static function getLabel(): string

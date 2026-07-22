@@ -28,6 +28,10 @@ class QuizResource extends Resource
 
     protected static ?string $navigationLabel = 'Kampanyalar';
 
+    protected static string|\UnitEnum|null $navigationGroup = 'Kampaniyalar';
+
+    protected static ?int $navigationSort = 2;
+
     protected static ?string $recordTitleAttribute = 'title';
 
     public static function getLabel(): string

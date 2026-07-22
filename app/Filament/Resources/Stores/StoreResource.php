@@ -30,6 +30,10 @@ class StoreResource extends Resource
 
     protected static ?string $navigationLabel = 'Filiallar';
 
+    protected static string|\UnitEnum|null $navigationGroup = 'Müəssisə';
+
+    protected static ?int $navigationSort = 2;
+
     protected static ?string $recordTitleAttribute = 'name';
 
     public static function getLabel(): string
