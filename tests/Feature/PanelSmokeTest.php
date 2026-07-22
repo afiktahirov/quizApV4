@@ -55,9 +55,9 @@ class PanelSmokeTest extends TestCase
         $response = $this->actingAs($user)->get('/' . $slug);
 
         // super_admin-only səhifələr merchant üçün 403 qaytarmalıdır,
-        // qalanları uğurla açılmalıdır. 'merchants' merchant_admin-ə açıqdır
-        // (öz mağazasının ünvan/profil məlumatını özü idarə edir).
-        $adminOnly = ['customers', 'quiz-categories', 'question-categories', 'plans'];
+        // qalanları uğurla açılmalıdır. Merchant öz mağazasını "Mağazam" (magazam)
+        // səhifəsindən idarə edir, "Mağazalar" resursu isə yalnız super admin-ə açıqdır.
+        $adminOnly = ['merchants', 'customers', 'quiz-categories', 'question-categories', 'plans'];
 
         if (in_array($slug, $adminOnly, true)) {
             $response->assertForbidden();
@@ -71,5 +71,26 @@ class PanelSmokeTest extends TestCase
         $user = User::where('email', 'cashier@example.com')->firstOrFail();
 
         $this->actingAs($user)->get('/coupons')->assertSuccessful();
+    }
+
+    public function test_merchant_admin_can_open_own_store_page(): void
+    {
+        $user = User::where('email', 'admin@example.com')->firstOrFail();
+
+        $this->actingAs($user)->get('/magazam')->assertSuccessful();
+    }
+
+    public function test_super_admin_cannot_open_merchant_store_page(): void
+    {
+        $admin = User::where('email', 'superadmin@quizapp.test')->firstOrFail();
+
+        $this->actingAs($admin)->get('/magazam')->assertForbidden();
+    }
+
+    public function test_cashier_cannot_open_merchant_store_page(): void
+    {
+        $user = User::where('email', 'cashier@example.com')->firstOrFail();
+
+        $this->actingAs($user)->get('/magazam')->assertForbidden();
     }
 }
