@@ -69,6 +69,7 @@ class Merchant extends Model
     public function plan()          { return $this->belongsTo(Plan::class); }
     public function subscriptions() { return $this->hasMany(MerchantSubscription::class); }
     public function subscriptionRequests() { return $this->hasMany(SubscriptionRequest::class); }
+    public function payments() { return $this->hasMany(Payment::class); }
 
     /**
      * Verilmiş resurs üçün paket limiti (null => limitsiz).

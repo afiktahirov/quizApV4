@@ -47,6 +47,25 @@ class SubscriptionRequestsTable
                         'rejected', 'cancelled' => 'danger',
                         default     => 'gray',
                     }),
+                TextColumn::make('payment_status')
+                    ->label('Ödəniş')
+                    ->state(fn (SubscriptionRequest $record) => $record->payments()->latest()->value('status'))
+                    ->badge()
+                    ->formatStateUsing(fn (?string $state) => match ($state) {
+                        'paid'      => 'Ödənilib',
+                        'pending'   => 'Gözlənilir',
+                        'failed'    => 'Uğursuz',
+                        'refunded'  => 'Geri qaytarılıb',
+                        'reversed'  => 'Ləğv edilib',
+                        'expired'   => 'Vaxtı bitib',
+                        default     => 'Manual',
+                    })
+                    ->color(fn (?string $state) => match ($state) {
+                        'paid'                => 'success',
+                        'pending'             => 'warning',
+                        'failed', 'expired'   => 'danger',
+                        default               => 'gray',
+                    }),
                 TextColumn::make('reviewer.name')->label('Baxan')->placeholder('-'),
                 TextColumn::make('created_at')->label('Tarix')->dateTime('d.m.Y H:i')->sortable(),
             ])

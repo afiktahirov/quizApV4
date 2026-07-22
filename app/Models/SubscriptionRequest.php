@@ -35,6 +35,11 @@ class SubscriptionRequest extends Model
         return $this->belongsTo(User::class, 'reviewed_by');
     }
 
+    public function payments()
+    {
+        return $this->hasMany(Payment::class);
+    }
+
     public function isPending(): bool
     {
         return $this->status === 'pending';

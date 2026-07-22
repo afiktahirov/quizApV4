@@ -4,6 +4,9 @@ namespace App\Filament\Pages;
 
 use App\Models\Merchant;
 use App\Models\Plan;
+use App\Models\SubscriptionRequest;
+use App\Services\Payments\PaymentGatewayException;
+use App\Services\Payments\PaymentService;
 use App\Services\SubscriptionService;
 use BackedEnum;
 use Filament\Actions\Action;
@@ -20,9 +23,10 @@ use Illuminate\Validation\ValidationException;
 use UnitEnum;
 
 /**
- * merchant_admin üçün "Abunəliyim" — cari paketinə baxır, paket seçib/uzadıb sorğu göndərir.
- * Onlayn ödəniş inteqrasiyası gələnə qədər sorğunu super admin əl ilə təsdiqləyir
- * (bax: SubscriptionRequestResource, SubscriptionService::approve).
+ * merchant_admin üçün "Abunəliyim" — cari paketinə baxır, paket seçib/uzadıb
+ * onlayn ödəniş (Kapital Bank / Birbank Business) ilə dərhal ödəyir.
+ * Bank dəyişəndə/əlavə olunanda burada dəyişiklik lazım deyil —
+ * bax: PaymentGatewayManager, config/payments.php.
  */
 class MySubscription extends Page
 {
@@ -55,6 +59,8 @@ class MySubscription extends Page
         abort_unless(static::canAccess(), 403);
 
         $this->record = Merchant::with('plan')->findOrFail(Filament::auth()->user()->merchant_id);
+
+        $this->notifyPaymentReturn();
     }
 
     public function getTitle(): string|Htmlable
@@ -90,7 +96,7 @@ class MySubscription extends Page
                     $plan = Plan::findOrFail($data['plan_id']);
 
                     try {
-                        app(SubscriptionService::class)->requestUpgrade($this->record, $plan, (int) $data['periods']);
+                        $request = app(SubscriptionService::class)->requestUpgrade($this->record, $plan, (int) $data['periods']);
                     } catch (ValidationException $e) {
                         Notification::make()
                             ->title('Sorğu göndərilmədi')
@@ -101,12 +107,15 @@ class MySubscription extends Page
                         return;
                     }
 
-                    Notification::make()
-                        ->title('Sorğunuz göndərildi')
-                        ->body('Admin təsdiqlədikdən sonra paketiniz aktivləşəcək. Onlayn ödəniş tezliklə əlavə olunacaq.')
-                        ->success()
-                        ->send();
+                    return $this->startPayment($request);
                 }),
+
+            Action::make('completePayment')
+                ->label('Ödənişi tamamla')
+                ->icon('heroicon-o-credit-card')
+                ->color('success')
+                ->visible(fn () => (bool) $this->getPendingRequest())
+                ->action(fn () => $this->startPayment($this->getPendingRequest())),
 
             Action::make('cancelRequest')
                 ->label('Sorğunu ləğv et')
@@ -124,6 +133,39 @@ class MySubscription extends Page
                     }
                 }),
         ];
+    }
+
+    protected function startPayment(?SubscriptionRequest $request)
+    {
+        if (! $request) {
+            return;
+        }
+
+        try {
+            $session = app(PaymentService::class)->initiate($request);
+        } catch (PaymentGatewayException $e) {
+            Notification::make()
+                ->title('Ödəniş başladıla bilmədi')
+                ->body($e->getMessage())
+                ->danger()
+                ->send();
+
+            return;
+        }
+
+        return redirect($session->redirectUrl);
+    }
+
+    protected function notifyPaymentReturn(): void
+    {
+        $payment = request()->query('payment');
+
+        match ($payment) {
+            'success' => Notification::make()->title('Ödəniş uğurludur')->body('Paketiniz aktivləşdirildi.')->success()->send(),
+            'failed'  => Notification::make()->title('Ödəniş uğursuz oldu')->body('Bank ödənişi təsdiqləmədi. Yenidən cəhd edə bilərsiniz.')->danger()->send(),
+            'error'   => Notification::make()->title('Ödəniş yoxlanıla bilmədi')->body('Bir az sonra yenidən yoxlayın.')->warning()->send(),
+            default   => null,
+        };
     }
 
     public function content(Schema $schema): Schema

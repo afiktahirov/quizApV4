@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\Merchant;
 use App\Models\MerchantSubscription;
+use App\Models\Payment;
 use App\Models\Plan;
 use App\Models\SubscriptionRequest;
 use App\Models\User;
@@ -86,6 +87,25 @@ class SubscriptionService
             $request->update([
                 'status'      => 'approved',
                 'reviewed_by' => $by->id,
+                'reviewed_at' => now(),
+            ]);
+        });
+    }
+
+    /** Onlayn ödəniş uğurla təsdiqləndikdə (bank tərəfindən) avtomatik təsdiq — admin iştirakı yoxdur. */
+    public function approveViaPayment(SubscriptionRequest $request, Payment $payment): void
+    {
+        DB::transaction(function () use ($request, $payment) {
+            $this->grant(
+                $request->merchant,
+                $request->plan,
+                $request->periods,
+                null,
+                'Sorğu #' . $request->id . ' — onlayn ödəniş #' . $payment->id . ' (' . $payment->provider . ') ilə avtomatik təsdiq',
+            );
+
+            $request->update([
+                'status'      => 'approved',
                 'reviewed_at' => now(),
             ]);
         });

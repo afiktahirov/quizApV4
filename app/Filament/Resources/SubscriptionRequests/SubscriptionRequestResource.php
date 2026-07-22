@@ -11,6 +11,12 @@ use Filament\Resources\Resource;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 
+/**
+ * Mağazaların "Abunəliyim" səhifəsindən göndərdiyi paket sorğuları.
+ * Normal axında ödəniş uğurlu olanda bunlar avtomatik "approved" olur
+ * (bax: PaymentService::handleReturn, SubscriptionService::approveViaPayment).
+ * Bu resurs əsasən izləmə və manual override (məs. bank xaricində razılaşma) üçündür.
+ */
 class SubscriptionRequestResource extends Resource
 {
     protected static ?string $model = SubscriptionRequest::class;
