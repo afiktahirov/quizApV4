@@ -2,7 +2,6 @@
 
 namespace Database\Seeders;
 
-use App\Models\User;
 // use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
@@ -13,10 +12,10 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
+        // DemoDataSeeder özü AdminSeeder/PlanSeeder/MerchantBasicSeeder-i çağırır,
+        // sonra bütün admin panel resursları üçün əlavə real görünüşlü demo data yaradır.
         $this->call([
-            AdminSeeder::class,
-            PlanSeeder::class,
-            MerchantBasicSeeder::class,
+            DemoDataSeeder::class,
         ]);
     }
 }

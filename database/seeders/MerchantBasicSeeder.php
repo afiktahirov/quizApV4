@@ -70,31 +70,55 @@ class MerchantBasicSeeder extends Seeder
         );
 
         $globalQuestions = [
-            ['Pizzanın vətəni hansı ölkədir?', ['Türkiyə', 'İtaliya', 'Fransa', 'ABŞ'], 1, $catFood],
-            ['Espresso nə ilə hazırlanır?', ['Çay yarpağı', 'Kahve dənəsi', 'Kakao', 'Süd'], 1, $catFood],
-            ['Sushi hansı mətbəxə aiddir?', ['Çin', 'Koreya', 'Yaponiya', 'Tayland'], 2, $catFood],
-            ['Bir stəkan suda neçə kalori var?', ['0', '50', '100', '10'], 0, $catGeneral],
-            ['Dünyanın ən çox istehlak olunan içkisi (sudan sonra)?', ['Kofe', 'Çay', 'Kola', 'Şirə'], 1, $catGeneral],
-            ['Balın kristallaşması nəyi göstərir?', ['Xarab olub', 'Təbiidir', 'Saxtadır', 'Su qatılıb'], 1, $catGeneral],
+            [$this->t('Pizzanın vətəni hansı ölkədir?', 'Which country is pizza originally from?', 'Из какой страны родом пицца?'),
+                [$this->t('Türkiyə', 'Turkey', 'Турция'), $this->t('İtaliya', 'Italy', 'Италия'), $this->t('Fransa', 'France', 'Франция'), $this->t('ABŞ', 'USA', 'США')], 1, $catFood],
+            [$this->t('Espresso nə ilə hazırlanır?', 'What is espresso made from?', 'Из чего готовят эспрессо?'),
+                [$this->t('Çay yarpağı', 'Tea leaves', 'Чайный лист'), $this->t('Kahve dənəsi', 'Coffee beans', 'Кофейные зёрна'), $this->same('Kakao'), $this->t('Süd', 'Milk', 'Молоко')], 1, $catFood],
+            [$this->t('Sushi hansı mətbəxə aiddir?', 'Which cuisine does sushi belong to?', 'К какой кухне относится суши?'),
+                [$this->t('Çin', 'Chinese', 'Китайская'), $this->t('Koreya', 'Korean', 'Корейская'), $this->t('Yaponiya', 'Japanese', 'Японская'), $this->t('Tayland', 'Thai', 'Тайская')], 2, $catFood],
+            [$this->t('Bir stəkan suda neçə kalori var?', 'How many calories are in a glass of water?', 'Сколько калорий в стакане воды?'),
+                [$this->same('0'), $this->same('50'), $this->same('100'), $this->same('10')], 0, $catGeneral],
+            [$this->t('Dünyanın ən çox istehlak olunan içkisi (sudan sonra)?', 'What is the world\'s most consumed drink after water?', 'Какой напиток самый популярный в мире после воды?'),
+                [$this->t('Kofe', 'Coffee', 'Кофе'), $this->t('Çay', 'Tea', 'Чай'), $this->t('Kola', 'Cola', 'Кола'), $this->t('Şirə', 'Juice', 'Сок')], 1, $catGeneral],
+            [$this->t('Balın kristallaşması nəyi göstərir?', 'What does honey crystallizing indicate?', 'О чём говорит кристаллизация мёда?'),
+                [$this->t('Xarab olub', 'It has spoiled', 'Испортился'), $this->t('Təbiidir', 'It\'s natural', 'Это естественно'), $this->t('Saxtadır', 'It\'s fake', 'Подделка'), $this->t('Su qatılıb', 'Water was added', 'Добавлена вода')], 1, $catGeneral],
+            [$this->t('Şokoladın əsas xammalı hansıdır?', 'What is the main raw material of chocolate?', 'Из чего в основном делают шоколад?'),
+                [$this->t('Kakao paxlası', 'Cocoa bean', 'Какао-боб'), $this->t('Qarğıdalı', 'Corn', 'Кукуруза'), $this->t('Şəkər qamışı', 'Sugar cane', 'Сахарный тростник'), $this->t('Fındıq', 'Hazelnut', 'Фундук')], 0, $catFood],
+            [$this->t('Fransız mətbəxinin məşhur şirniyyatı hansıdır?', 'Which is a famous French pastry?', 'Какой десерт знаменит во французской кухне?'),
+                [$this->same('Baklava'), $this->same('Croissant'), $this->same('Napoleon'), $this->same('Cheesecake')], 1, $catFood],
+            [$this->t('Hansı ədviyyat "ədviyyatların kralı" adlanır?', 'Which spice is called the "king of spices"?', 'Какую специю называют «королём специй»?'),
+                [$this->t('Darçın', 'Cinnamon', 'Корица'), $this->t('Zəfəran', 'Saffron', 'Шафран'), $this->t('İstiot', 'Pepper', 'Перец'), $this->t('Zəncəfil', 'Ginger', 'Имбирь')], 1, $catFood],
+            [$this->t('İtalyan mətbəxinin əsas xəmir yeməyi hansıdır?', 'What is the main pasta-based Italian dish?', 'Какое блюдо — основа итальянской кухни из теста?'),
+                [$this->same('Risotto'), $this->same('Pasta'), $this->same('Paella'), $this->same('Tapas')], 1, $catFood],
+            [$this->t('Azərbaycanın paytaxtı hansı şəhərdir?', 'What is the capital of Azerbaijan?', 'Какая столица Азербайджана?'),
+                [$this->t('Gəncə', 'Ganja', 'Гянджа'), $this->t('Bakı', 'Baku', 'Баку'), $this->t('Sumqayıt', 'Sumgayit', 'Сумгаит'), $this->t('Şəki', 'Sheki', 'Шеки')], 1, $catGeneral],
+            [$this->t('Bir ildə neçə ay var?', 'How many months are there in a year?', 'Сколько месяцев в году?'),
+                [$this->same('10'), $this->same('12'), $this->same('13'), $this->same('11')], 1, $catGeneral],
+            [$this->t('Ən böyük okean hansıdır?', 'Which is the largest ocean?', 'Какой океан самый большой?'),
+                [$this->t('Atlantik', 'Atlantic', 'Атлантический'), $this->t('Hind', 'Indian', 'Индийский'), $this->t('Sakit (Pasifik)', 'Pacific', 'Тихий'), $this->t('Şimal Buzlu', 'Arctic', 'Северный Ледовитый')], 2, $catGeneral],
+            [$this->t('Yetkin insan bədənində neçə sümük var?', 'How many bones does an adult human have?', 'Сколько костей у взрослого человека?'),
+                [$this->same('186'), $this->same('206'), $this->same('150'), $this->same('300')], 1, $catGeneral],
+            [$this->t('Göy qurşağında neçə əsas rəng var?', 'How many main colors are in a rainbow?', 'Сколько основных цветов в радуге?'),
+                [$this->same('5'), $this->same('6'), $this->same('7'), $this->same('8')], 2, $catGeneral],
         ];
 
         $globalIds = [];
         foreach ($globalQuestions as [$title, $opts, $correct, $cat]) {
             $q = Question::firstOrCreate(
-                ['merchant_id' => null, 'title->az' => $title],
+                ['merchant_id' => null, 'title->az' => $title['az']],
                 [
                     'merchant_id' => null,
-                    'title'       => ['az' => $title, 'en' => $title, 'ru' => $title],
+                    'title'       => $title,
                     'type'        => 'mcq',
                     'is_active'   => true,
                 ],
             );
 
             if ($q->options()->count() === 0) {
-                foreach ($opts as $i => $text) {
+                foreach ($opts as $i => $opt) {
                     QuestionOption::create([
                         'question_id' => $q->id,
-                        'option_text' => ['az' => $text, 'en' => $text, 'ru' => $text],
+                        'option_text' => $opt,
                         'is_correct'  => $i === $correct,
                         'position'    => $i + 1,
                     ]);
@@ -107,27 +131,29 @@ class MerchantBasicSeeder extends Seeder
 
         // ---------- MERCHANT-IN ÖZ SUALLARI ----------
         $ownQuestions = [
-            ['Restoranımızın ən məşhur yeməyi hansıdır?', ['Kabab', 'Plov', 'Dolma', 'Burger'], 0],
-            ['Restoranımız hansı ildə açılıb?', ['2015', '2018', '2020', '2022'], 1],
+            [$this->t('Restoranımızın ən məşhur yeməyi hansıdır?', 'What is our restaurant\'s most famous dish?', 'Какое блюдо самое популярное в нашем ресторане?'),
+                [$this->same('Kabab'), $this->same('Plov'), $this->same('Dolma'), $this->same('Burger')], 0],
+            [$this->t('Restoranımız hansı ildə açılıb?', 'In which year did our restaurant open?', 'В каком году открылся наш ресторан?'),
+                [$this->same('2015'), $this->same('2018'), $this->same('2020'), $this->same('2022')], 1],
         ];
 
         $ownIds = [];
         foreach ($ownQuestions as [$title, $opts, $correct]) {
             $q = Question::firstOrCreate(
-                ['merchant_id' => $merchant->id, 'title->az' => $title],
+                ['merchant_id' => $merchant->id, 'title->az' => $title['az']],
                 [
                     'merchant_id' => $merchant->id,
-                    'title'       => ['az' => $title, 'en' => $title, 'ru' => $title],
+                    'title'       => $title,
                     'type'        => 'mcq',
                     'is_active'   => true,
                 ],
             );
 
             if ($q->options()->count() === 0) {
-                foreach ($opts as $i => $text) {
+                foreach ($opts as $i => $opt) {
                     QuestionOption::create([
                         'question_id' => $q->id,
-                        'option_text' => ['az' => $text, 'en' => $text, 'ru' => $text],
+                        'option_text' => $opt,
                         'is_correct'  => $i === $correct,
                         'position'    => $i + 1,
                     ]);
@@ -172,5 +198,17 @@ class MerchantBasicSeeder extends Seeder
                 $tier,
             );
         }
+    }
+
+    /** az/en/ru mətn xəritəsi qurur. */
+    private function t(string $az, string $en, string $ru): array
+    {
+        return ['az' => $az, 'en' => $en, 'ru' => $ru];
+    }
+
+    /** Hər üç dildə eyni qalan mətn (rəqəm, marka adı və s.) üçün. */
+    private function same(string $value): array
+    {
+        return ['az' => $value, 'en' => $value, 'ru' => $value];
     }
 }
