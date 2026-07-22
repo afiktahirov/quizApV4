@@ -10,7 +10,7 @@ class Plan extends Model
     use HasFactory;
 
     protected $fillable = [
-        'name', 'slug', 'price', 'currency', 'billing_period',
+        'name', 'slug', 'price', 'currency', 'billing_period', 'trial_days',
         'max_quizzes', 'max_questions', 'max_stores', 'max_ads',
         'description', 'is_active', 'sort_order',
     ];
@@ -22,12 +22,23 @@ class Plan extends Model
         'max_questions' => 'integer',
         'max_stores'    => 'integer',
         'max_ads'       => 'integer',
+        'trial_days'    => 'integer',
     ];
 
-    /** Bir dövrün (billing_period) neçə aya bərabər olduğu */
+    /** Bir dövrün (billing_period) neçə aya bərabər olduğu (sınaq paketləri üçün istifadə olunmur) */
     public function periodMonths(): int
     {
         return $this->billing_period === 'yearly' ? 12 : 1;
+    }
+
+    public function isTrial(): bool
+    {
+        return $this->billing_period === 'trial';
+    }
+
+    public function isFree(): bool
+    {
+        return (float) $this->price <= 0;
     }
 
     public function merchants()

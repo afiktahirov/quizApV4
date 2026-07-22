@@ -23,14 +23,17 @@ class SubscriptionService
     public function grant(Merchant $merchant, Plan $plan, int $periods = 1, ?User $by = null, ?string $note = null): MerchantSubscription
     {
         $periods = max(1, $periods);
-        $months  = $plan->periodMonths() * $periods;
 
-        return DB::transaction(function () use ($merchant, $plan, $periods, $months, $by, $note) {
+        return DB::transaction(function () use ($merchant, $plan, $periods, $by, $note) {
             // Uzatma: mövcud müddət gələcəkdədirsə onun üstünə, deyilsə indidən
-            $base    = ($merchant->subscription_ends_at && $merchant->subscription_ends_at->isFuture())
+            $base = ($merchant->subscription_ends_at && $merchant->subscription_ends_at->isFuture())
                 ? $merchant->subscription_ends_at->copy()
                 : now();
-            $newEnd  = $base->copy()->addMonths($months);
+
+            // Sınaq paketləri gün-əsaslı müddətlə işləyir (məs. 14 gün), digərləri ay-əsaslı.
+            $newEnd = $plan->isTrial()
+                ? $base->copy()->addDays(($plan->trial_days ?: 1) * $periods)
+                : $base->copy()->addMonths($plan->periodMonths() * $periods);
 
             $merchant->update([
                 'plan_id'              => $plan->id,
@@ -92,6 +95,19 @@ class SubscriptionService
         });
     }
 
+    /** Pulsuz paket/sınaq (qiymət 0) — ödənişə ehtiyac yoxdur, dərhal tətbiq olunur. */
+    public function approveFree(SubscriptionRequest $request): void
+    {
+        DB::transaction(function () use ($request) {
+            $this->grant($request->merchant, $request->plan, $request->periods, null, 'Pulsuz paket/sınaq — avtomatik təsdiq');
+
+            $request->update([
+                'status'      => 'approved',
+                'reviewed_at' => now(),
+            ]);
+        });
+    }
+
     /** Onlayn ödəniş uğurla təsdiqləndikdə (bank tərəfindən) avtomatik təsdiq — admin iştirakı yoxdur. */
     public function approveViaPayment(SubscriptionRequest $request, Payment $payment): void
     {
@@ -111,14 +127,42 @@ class SubscriptionService
         });
     }
 
-    /** Super admin sorğunu rədd edir. */
-    public function reject(SubscriptionRequest $request, User $by, ?string $note = null): void
+    /** Sorğunu rədd edir. $by null olarsa (məs. avtomatik yenilənmə uğursuzluğu) sistem tərəfindən sayılır. */
+    public function reject(SubscriptionRequest $request, ?User $by, ?string $note = null): void
     {
         $request->update([
             'status'      => 'rejected',
             'note'        => $note,
-            'reviewed_by' => $by->id,
+            'reviewed_by' => $by?->id,
             'reviewed_at' => now(),
+        ]);
+    }
+
+    /**
+     * Mağazanın CARİ paketini 1 dövr üçün avtomatik yenilənmə sorğusu yaradır
+     * (yadda saxlanılan kartla ödəniş üçün). Bax: PaymentService::chargeForRenewal.
+     */
+    public function createRenewalRequest(Merchant $merchant): SubscriptionRequest
+    {
+        if (! $merchant->plan_id) {
+            throw new \RuntimeException('Mağazanın aktiv paketi yoxdur, avtomatik yenilənə bilməz.');
+        }
+
+        if ($merchant->subscriptionRequests()->where('status', 'pending')->exists()) {
+            throw ValidationException::withMessages([
+                'plan_id' => 'Artıq gözləmədə olan bir sorğu var.',
+            ]);
+        }
+
+        $plan = $merchant->plan;
+
+        return $merchant->subscriptionRequests()->create([
+            'plan_id'  => $plan->id,
+            'periods'  => 1,
+            'amount'   => (float) $plan->price,
+            'currency' => $plan->currency,
+            'status'   => 'pending',
+            'note'     => 'Avtomatik yenilənmə',
         ]);
     }
 

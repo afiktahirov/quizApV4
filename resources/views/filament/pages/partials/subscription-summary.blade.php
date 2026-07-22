@@ -43,6 +43,24 @@
         </div>
     </div>
 
+    <div>
+        <div class="text-xs text-gray-500 dark:text-gray-400">Yadda saxlanılan kart</div>
+        <div class="text-sm font-medium">
+            @if ($paymentMethod)
+                {{ $paymentMethod->card_mask ?? 'Kart yadda saxlanılıb' }}
+                <span @class([
+                    'fi-badge inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium ms-2',
+                    'bg-success-50 text-success-700 dark:bg-success-400/10 dark:text-success-400' => $merchant->auto_renew,
+                    'bg-gray-50 text-gray-600 dark:bg-gray-400/10 dark:text-gray-400' => ! $merchant->auto_renew,
+                ])>
+                    {{ $merchant->auto_renew ? 'Avtomatik yenilənmə aktivdir' : 'Avtomatik yenilənmə söndürülüb' }}
+                </span>
+            @else
+                Yoxdur — növbəti ödənişdə "Kartı yadda saxla" seçimini aktivləşdirin
+            @endif
+        </div>
+    </div>
+
     <div class="grid grid-cols-2 gap-4 sm:grid-cols-4">
         @foreach ([
             'quizzes' => 'Kampaniyalar',

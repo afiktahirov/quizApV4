@@ -17,6 +17,8 @@ use Illuminate\Database\Eloquent\Builder;
 
 class QuizSessionResource extends Resource
 {
+    use \App\Filament\Concerns\RequiresActivePlan;
+
     protected static ?string $model = QuizSession::class;
 
     protected static ?string $navigationLabel = 'Kampaniya iştirakçıları';
@@ -69,6 +71,11 @@ class QuizSessionResource extends Resource
         }
 
         return $query->where('merchant_id', $user?->merchant_id);
+    }
+
+    public static function canViewAny(): bool
+    {
+        return static::merchantHasSelectedPlan();
     }
 
     // Sessiyalar yalnız oxumaq üçündür — nəticələr paneldən dəyişdirilə bilməz

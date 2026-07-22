@@ -19,6 +19,8 @@ use Illuminate\Database\Eloquent\Builder;
 
 class UserResource extends Resource
 {
+    use \App\Filament\Concerns\RequiresActivePlan;
+
     protected static ?string $model = User::class;
 
     protected static string|BackedEnum|null $navigationIcon = 'heroicon-o-user-circle';
@@ -67,7 +69,7 @@ class UserResource extends Resource
     {
         $user = Filament::auth()->user();
 
-        return (bool) ($user?->is_admin || $user?->isMerchantAdmin());
+        return (bool) ($user?->is_admin || $user?->isMerchantAdmin()) && static::merchantHasSelectedPlan();
     }
 
     public static function getEloquentQuery(): Builder

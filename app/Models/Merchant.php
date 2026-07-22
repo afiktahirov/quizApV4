@@ -13,7 +13,7 @@ class Merchant extends Model
     protected $fillable = [
         'name', 'slug', 'status', 'bio', 'photo',
         'latitude', 'longitude', 'geojson', 'address',
-        'plan_id', 'subscription_ends_at',
+        'plan_id', 'subscription_ends_at', 'auto_renew',
         'coupon_discount_type', 'coupon_value', 'coupon_ttl_hours',
     ];
 
@@ -22,6 +22,7 @@ class Merchant extends Model
         'geojson'              => 'array',
         'subscription_ends_at' => 'datetime',
         'coupon_value'         => 'decimal:2',
+        'auto_renew'           => 'boolean',
     ];
 
     protected function location(): Attribute
@@ -70,6 +71,12 @@ class Merchant extends Model
     public function subscriptions() { return $this->hasMany(MerchantSubscription::class); }
     public function subscriptionRequests() { return $this->hasMany(SubscriptionRequest::class); }
     public function payments() { return $this->hasMany(Payment::class); }
+    public function paymentMethods() { return $this->hasMany(PaymentMethod::class); }
+
+    public function defaultPaymentMethod(?string $provider = null): ?PaymentMethod
+    {
+        return $this->paymentMethods()->where('provider', $provider ?? config('payments.default'))->first();
+    }
 
     /**
      * Verilmiş resurs üçün paket limiti (null => limitsiz).

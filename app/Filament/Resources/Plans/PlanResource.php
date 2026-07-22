@@ -84,9 +84,18 @@ class PlanResource extends Resource
                 ->options([
                     'monthly' => 'Aylıq',
                     'yearly'  => 'İllik',
+                    'trial'   => 'Pulsuz sınaq',
                 ])
                 ->default('monthly')
+                ->live()
                 ->required(),
+
+            TextInput::make('trial_days')
+                ->label('Sınaq müddəti (gün)')
+                ->numeric()->minValue(1)->default(14)
+                ->visible(fn ($get) => $get('billing_period') === 'trial')
+                ->required(fn ($get) => $get('billing_period') === 'trial')
+                ->helperText('Məsələn 14 gün, 30 gün və s.'),
 
             TextInput::make('max_quizzes')
                 ->label('Maks. kampaniya')
@@ -139,8 +148,13 @@ class PlanResource extends Resource
                     ->sortable(),
                 TextColumn::make('billing_period')
                     ->label('Dövr')
-                    ->formatStateUsing(fn (string $state) => $state === 'yearly' ? 'İllik' : 'Aylıq')
-                    ->badge(),
+                    ->formatStateUsing(fn (string $state, Plan $r) => match ($state) {
+                        'yearly' => 'İllik',
+                        'trial'  => 'Sınaq (' . ($r->trial_days ?? '?') . ' gün)',
+                        default  => 'Aylıq',
+                    })
+                    ->badge()
+                    ->color(fn (string $state) => $state === 'trial' ? 'warning' : 'gray'),
                 TextColumn::make('max_quizzes')->label('Kampaniya')->placeholder('∞'),
                 TextColumn::make('max_questions')->label('Sual')->placeholder('∞'),
                 TextColumn::make('max_stores')->label('Filial')->placeholder('∞'),

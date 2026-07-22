@@ -19,6 +19,7 @@ use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Session\Middleware\StartSession;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
 use App\Models\Merchant;
+use App\Filament\Pages\Auth\MerchantRegister;
 use App\Filament\Pages\Tenancy\RegisterMerchant;
 use App\Filament\Pages\Tenancy\EditMerchantProfile;
 use Outerweb\FilamentTranslatableFields\Filament\Plugins\FilamentTranslatableFieldsPlugin;
@@ -36,6 +37,7 @@ class AdminPanelProvider extends PanelProvider
             ->id('admin')
             ->path('')
             ->login()
+            ->registration(MerchantRegister::class)
             ->colors([
                 'primary' => Color::Amber,
             ])

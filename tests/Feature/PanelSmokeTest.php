@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\Merchant;
 use App\Models\User;
 use Database\Seeders\MerchantBasicSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -114,5 +115,35 @@ class PanelSmokeTest extends TestCase
         $user = User::where('email', 'cashier@example.com')->firstOrFail();
 
         $this->actingAs($user)->get('/abuneliyim')->assertForbidden();
+    }
+
+    private function makeUnsubscribedMerchantAdmin(): User
+    {
+        $merchant = Merchant::create([
+            'name' => 'Yeni Mağaza', 'slug' => 'yeni-magaza-' . uniqid(), 'status' => 'active',
+            'coupon_discount_type' => 'percent', 'coupon_value' => 10, 'coupon_ttl_hours' => 48,
+        ]);
+
+        return User::create([
+            'name' => 'Yeni Admin', 'email' => 'yeni-' . uniqid() . '@example.com',
+            'password' => 'secret', 'role' => 'merchant_admin', 'merchant_id' => $merchant->id,
+        ]);
+    }
+
+    public function test_merchant_without_plan_cannot_access_functional_resources(): void
+    {
+        $user = $this->makeUnsubscribedMerchantAdmin();
+
+        foreach (['quizzes', 'questions', 'quiz-sessions', 'users', 'ads', 'stores', 'coupons'] as $slug) {
+            $this->actingAs($user)->get('/' . $slug)->assertForbidden();
+        }
+    }
+
+    public function test_merchant_without_plan_can_still_open_subscription_and_store_pages(): void
+    {
+        $user = $this->makeUnsubscribedMerchantAdmin();
+
+        $this->actingAs($user)->get('/abuneliyim')->assertSuccessful();
+        $this->actingAs($user)->get('/magazam')->assertSuccessful();
     }
 }

@@ -22,6 +22,12 @@ use Illuminate\Database\Eloquent\Builder;
 class QuestionResource extends Resource
 {
     use \App\Filament\Concerns\EnforcesPlanLimit;
+    use \App\Filament\Concerns\RequiresActivePlan;
+
+    public static function canViewAny(): bool
+    {
+        return static::merchantHasSelectedPlan();
+    }
 
     protected static ?string $model = Question::class;
 

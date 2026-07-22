@@ -13,6 +13,7 @@ use Filament\Actions\Action;
 use Filament\Facades\Filament;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Toggle;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
 use Filament\Schemas\Components\Html;
@@ -91,6 +92,10 @@ class MySubscription extends Page
                         ->label('Neçə dövr (ay/il)')
                         ->numeric()->minValue(1)->default(1)->required()
                         ->helperText('Paketin dövrünə görə (aylıq paket → ay sayı, illik → il sayı)'),
+                    Toggle::make('save_card')
+                        ->label('Kartı yadda saxla')
+                        ->helperText('Sonrakı yenilənmələr üçün kart bank tərəfində təhlükəsiz saxlanılır (kart nömrəsi bizdə saxlanmır). Avtomatik yenilənməni aşağıda ayrıca aça bilərsiniz.')
+                        ->default(true),
                 ])
                 ->action(function (array $data) {
                     $plan = Plan::findOrFail($data['plan_id']);
@@ -107,7 +112,19 @@ class MySubscription extends Page
                         return;
                     }
 
-                    return $this->startPayment($request);
+                    // Pulsuz paket/sınaq — ödənişə ehtiyac yoxdur, dərhal aktivləşdirilir.
+                    if ($plan->isFree()) {
+                        app(SubscriptionService::class)->approveFree($request);
+
+                        Notification::make()
+                            ->title($plan->isTrial() ? 'Pulsuz sınaq aktivləşdirildi' : 'Paket aktivləşdirildi')
+                            ->success()
+                            ->send();
+
+                        return;
+                    }
+
+                    return $this->startPayment($request, (bool) ($data['save_card'] ?? false));
                 }),
 
             Action::make('completePayment')
@@ -132,17 +149,45 @@ class MySubscription extends Page
                         Notification::make()->title('Sorğu ləğv edildi')->success()->send();
                     }
                 }),
+
+            Action::make('toggleAutoRenew')
+                ->label(fn () => $this->record->auto_renew ? 'Avtomatik yenilənməni söndür' : 'Avtomatik yenilənməni aç')
+                ->icon('heroicon-o-arrow-path')
+                ->color(fn () => $this->record->auto_renew ? 'gray' : 'success')
+                ->visible(fn () => (bool) $this->record->defaultPaymentMethod())
+                ->action(function () {
+                    $this->record->update(['auto_renew' => ! $this->record->auto_renew]);
+
+                    Notification::make()
+                        ->title($this->record->auto_renew ? 'Avtomatik yenilənmə aktivləşdirildi' : 'Avtomatik yenilənmə söndürüldü')
+                        ->success()
+                        ->send();
+                }),
+
+            Action::make('removeCard')
+                ->label('Kartı sil')
+                ->icon('heroicon-o-trash')
+                ->color('danger')
+                ->visible(fn () => (bool) $this->record->defaultPaymentMethod())
+                ->requiresConfirmation()
+                ->modalDescription('Kart silinəcək və avtomatik yenilənmə söndüriləcək.')
+                ->action(function () {
+                    $this->record->defaultPaymentMethod()?->delete();
+                    $this->record->update(['auto_renew' => false]);
+
+                    Notification::make()->title('Kart silindi')->success()->send();
+                }),
         ];
     }
 
-    protected function startPayment(?SubscriptionRequest $request)
+    protected function startPayment(?SubscriptionRequest $request, bool $saveCard = false)
     {
         if (! $request) {
             return;
         }
 
         try {
-            $session = app(PaymentService::class)->initiate($request);
+            $session = app(PaymentService::class)->initiate($request, saveCard: $saveCard);
         } catch (PaymentGatewayException $e) {
             Notification::make()
                 ->title('Ödəniş başladıla bilmədi')
@@ -176,9 +221,10 @@ class MySubscription extends Page
             Section::make('Cari abunəlik')
                 ->schema([
                     Html::make(fn () => view('filament.pages.partials.subscription-summary', [
-                        'merchant' => $merchant,
-                        'plan'     => $merchant->plan,
-                        'pending'  => $this->getPendingRequest(),
+                        'merchant'      => $merchant,
+                        'plan'          => $merchant->plan,
+                        'pending'       => $this->getPendingRequest(),
+                        'paymentMethod' => $merchant->defaultPaymentMethod(),
                     ])->render()),
                 ]),
 

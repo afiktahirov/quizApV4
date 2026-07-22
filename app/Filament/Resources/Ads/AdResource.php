@@ -21,6 +21,12 @@ use Illuminate\Database\Eloquent\Builder;
 class AdResource extends Resource
 {
     use \App\Filament\Concerns\EnforcesPlanLimit;
+    use \App\Filament\Concerns\RequiresActivePlan;
+
+    public static function canViewAny(): bool
+    {
+        return static::merchantHasSelectedPlan();
+    }
 
     protected static ?string $model = Ad::class;
 

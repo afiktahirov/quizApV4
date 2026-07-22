@@ -4,13 +4,16 @@ namespace Tests\Feature;
 
 use App\Models\Merchant;
 use App\Models\Payment;
+use App\Models\PaymentMethod;
 use App\Models\Plan;
 use App\Models\SubscriptionRequest;
 use App\Services\Payments\KapitalBank\KapitalBankGateway;
+use App\Services\Payments\PaymentGatewayException;
 use App\Services\Payments\PaymentGatewayManager;
 use App\Services\Payments\PaymentService;
 use App\Services\SubscriptionService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Http;
 use Tests\TestCase;
 
@@ -193,5 +196,151 @@ class PaymentGatewayTest extends TestCase
         $gateway = app(PaymentGatewayManager::class)->gateway('kapital_bank');
 
         $this->assertInstanceOf(KapitalBankGateway::class, $gateway);
+    }
+
+    public function test_save_card_flow_captures_stored_token_on_successful_payment(): void
+    {
+        Http::fake([
+            'txpgtst.kapitalbank.az/api/order' => Http::response([
+                'order' => ['id' => 333, 'hppUrl' => 'https://txpgtst.kapitalbank.az/flex', 'password' => 'pw', 'status' => 'Preparing'],
+            ], 200),
+        ]);
+
+        $request = $this->makeRequest();
+        app(PaymentService::class)->initiate($request, saveCard: true);
+
+        $payment = Payment::first();
+        $this->assertTrue((bool) $payment->save_card);
+
+        Http::fake([
+            'txpgtst.kapitalbank.az/api/order/*' => Http::response([
+                'order' => ['id' => 333, 'status' => 'FullyPaid', 'srcToken' => ['storedId' => 'tok-abc', 'displayName' => '**** 1778']],
+            ], 200),
+        ]);
+
+        app(PaymentService::class)->handleReturn('kapital_bank', '333');
+
+        $method = PaymentMethod::first();
+        $this->assertNotNull($method);
+        $this->assertEquals($request->merchant_id, $method->merchant_id);
+        $this->assertEquals('tok-abc', $method->external_token_id);
+        $this->assertEquals('**** 1778', $method->card_mask);
+    }
+
+    private function makeMerchantWithSavedCard(): Merchant
+    {
+        $plan = Plan::create([
+            'name' => 'Std', 'slug' => 'std-' . uniqid(), 'price' => 60, 'currency' => 'AZN',
+            'billing_period' => 'monthly', 'is_active' => true,
+        ]);
+
+        $merchant = $this->makeMerchant();
+        $merchant->update(['plan_id' => $plan->id, 'auto_renew' => true]);
+
+        PaymentMethod::create([
+            'merchant_id' => $merchant->id,
+            'provider' => 'kapital_bank',
+            'external_token_id' => 'tok-xyz',
+            'card_mask' => '**** 1234',
+        ]);
+
+        return $merchant->fresh();
+    }
+
+    private function fakeChargeStoredCardFlow(int $orderId, string $finalStatus): void
+    {
+        Http::fake([
+            'txpgtst.kapitalbank.az/api/order' => Http::response(['order' => ['id' => $orderId, 'password' => 'pw-renew']], 200),
+            'txpgtst.kapitalbank.az/api/order/*/set-src-token*' => Http::response([], 200),
+            'txpgtst.kapitalbank.az/api/order/*/exec-tran' => Http::response([], 200),
+            'txpgtst.kapitalbank.az/api/order/*tranDetailLevel*' => Http::response(['order' => ['id' => $orderId, 'status' => $finalStatus]], 200),
+        ]);
+    }
+
+    public function test_charge_for_renewal_pays_with_stored_card_without_redirect(): void
+    {
+        $merchant = $this->makeMerchantWithSavedCard();
+        $endsAtBefore = $merchant->subscription_ends_at;
+
+        $this->fakeChargeStoredCardFlow(444, 'FullyPaid');
+
+        $payment = app(PaymentService::class)->chargeForRenewal($merchant);
+
+        $this->assertTrue($payment->isPaid());
+        $this->assertEquals('444', $payment->external_order_id);
+        $this->assertEquals('approved', $payment->subscriptionRequest->status);
+        $this->assertTrue($merchant->fresh()->subscription_ends_at->greaterThan($endsAtBefore ?? now()));
+
+        Http::assertSent(fn ($request) => str_contains($request->url(), 'set-src-token')
+            && $request['token']['storedId'] === 'tok-xyz');
+
+        Http::assertSent(fn ($request) => str_contains($request->url(), 'exec-tran')
+            && ($request['tran']['conditions']['cofUsage'] ?? null) === 'Recurring');
+    }
+
+    public function test_charge_for_renewal_rejects_request_when_bank_declines(): void
+    {
+        $merchant = $this->makeMerchantWithSavedCard();
+        $planIdBefore = $merchant->plan_id;
+
+        $this->fakeChargeStoredCardFlow(445, 'Declined');
+
+        $payment = app(PaymentService::class)->chargeForRenewal($merchant);
+
+        $this->assertEquals(Payment::STATUS_FAILED, $payment->status);
+        $this->assertEquals('rejected', $payment->subscriptionRequest->status);
+        $this->assertEquals($planIdBefore, $merchant->fresh()->plan_id);
+    }
+
+    public function test_charge_for_renewal_throws_without_stored_card(): void
+    {
+        $plan = Plan::create([
+            'name' => 'Std', 'slug' => 'std-' . uniqid(), 'price' => 60, 'currency' => 'AZN',
+            'billing_period' => 'monthly', 'is_active' => true,
+        ]);
+        $merchant = $this->makeMerchant();
+        $merchant->update(['plan_id' => $plan->id, 'auto_renew' => true]);
+
+        $this->expectException(PaymentGatewayException::class);
+
+        app(PaymentService::class)->chargeForRenewal($merchant->fresh());
+    }
+
+    public function test_auto_renew_command_charges_eligible_merchants(): void
+    {
+        $merchant = $this->makeMerchantWithSavedCard();
+        $merchant->update(['subscription_ends_at' => now()->addHours(5)]);
+
+        $this->fakeChargeStoredCardFlow(446, 'FullyPaid');
+
+        Artisan::call('subscriptions:auto-renew');
+
+        $this->assertEquals(1, Payment::where('status', Payment::STATUS_PAID)->count());
+        $this->assertTrue($merchant->fresh()->subscription_ends_at->greaterThan(now()->addDays(20)));
+    }
+
+    public function test_sync_pending_payments_reconciles_abandoned_payment(): void
+    {
+        Http::fake([
+            'txpgtst.kapitalbank.az/api/order' => Http::response([
+                'order' => ['id' => 447, 'hppUrl' => 'https://txpgtst.kapitalbank.az/flex', 'password' => 'pw', 'status' => 'Preparing'],
+            ], 200),
+        ]);
+
+        $request = $this->makeRequest();
+        app(PaymentService::class)->initiate($request);
+
+        Payment::first()->forceFill(['created_at' => now()->subMinutes(10)])->save();
+
+        Http::fake([
+            'txpgtst.kapitalbank.az/api/order/*' => Http::response([
+                'order' => ['id' => 447, 'status' => 'FullyPaid'],
+            ], 200),
+        ]);
+
+        Artisan::call('payments:sync-pending');
+
+        $this->assertTrue(Payment::first()->isPaid());
+        $this->assertEquals('approved', $request->fresh()->status);
     }
 }

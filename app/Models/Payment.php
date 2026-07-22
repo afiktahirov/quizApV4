@@ -17,7 +17,7 @@ class Payment extends Model
     public const STATUS_EXPIRED  = 'expired';
 
     protected $fillable = [
-        'merchant_id', 'subscription_request_id', 'provider', 'external_order_id',
+        'merchant_id', 'subscription_request_id', 'provider', 'external_order_id', 'save_card',
         'amount', 'currency', 'status', 'raw_response', 'paid_at',
     ];
 
@@ -25,6 +25,7 @@ class Payment extends Model
         'amount'       => 'decimal:2',
         'raw_response' => 'array',
         'paid_at'      => 'datetime',
+        'save_card'    => 'boolean',
     ];
 
     public function merchant()
