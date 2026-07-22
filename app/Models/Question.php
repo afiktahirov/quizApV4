@@ -8,12 +8,19 @@ class Question extends Model
 {
 use HasFactory;
 protected $fillable = [
-'merchant_id','store_id','title','type','difficulty','is_active'
+'merchant_id','title','type','difficulty','is_active'
 ];
 
 protected $casts =[
-    'title'=>'array'
+    'title'=>'array',
+    'is_active'=>'boolean'
 ];
+
+/** Qlobal sual bazasına aiddir? (merchant_id yoxdursa, hazır bazadandır) */
+public function isGlobal(): bool
+{
+    return $this->merchant_id === null;
+}
 
 
 public function getTitleAzAttribute(): string
@@ -24,7 +31,6 @@ public function getTitleAzAttribute(): string
 
 
 public function merchant(){ return $this->belongsTo(Merchant::class); }
-public function store(){ return $this->belongsTo(Store::class); }
 public function options(){ return $this->hasMany(QuestionOption::class); }
 
     public function questionCategories()

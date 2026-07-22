@@ -8,9 +8,11 @@ return new class extends Migration {
     public function up(): void {
         Schema::create('quiz_sessions', function (Blueprint $t) {
             $t->id();
-            $t->foreignId('store_id')->constrained()->cascadeOnDelete();
+            $t->foreignId('merchant_id')->constrained()->cascadeOnDelete();
+            $t->foreignId('store_id')->nullable()->constrained()->nullOnDelete();
             $t->foreignId('quiz_id')->constrained()->cascadeOnDelete();
-            $t->foreignId('user_id')->nullable()->constrained()->nullOnDelete(); // guest də ola bilər
+            $t->foreignId('customer_id')->nullable()->constrained()->nullOnDelete();
+            $t->json('question_ids')->nullable(); // bu sessiyada verilən sualların id-ləri
             $t->timestamp('started_at')->useCurrent();
             $t->timestamp('finished_at')->nullable();
             $t->unsignedTinyInteger('score_pct')->nullable();

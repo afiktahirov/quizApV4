@@ -45,6 +45,11 @@ return [
             'driver' => 'sanctum',
             'provider' => 'customers', // 👈 bu customer modelindən istifadə edəcək
         ],
+
+        'staff' => [
+            'driver' => 'sanctum',
+            'provider' => 'users', // merchant işçiləri (kassir/admin) üçün API guard
+        ],
     ],
 
     /*

@@ -12,7 +12,7 @@ return new class extends Migration {
             $t->string('slug')->unique();
             $t->enum('status',['active','inactive'])->default('active');
             $t->timestamps();
-            $t->unique(['merchant_id','name']);
+            $t->unique('name');
         });
 
         Schema::create('quizzes', function (Blueprint $t) {

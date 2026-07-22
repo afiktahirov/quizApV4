@@ -26,7 +26,7 @@ return new class extends Migration {
         Schema::create('coupon_redemptions', function (Blueprint $t) {
             $t->id();
             $t->foreignId('coupon_id')->constrained('coupons')->cascadeOnDelete();
-            $t->foreignId('store_id')->constrained()->cascadeOnDelete();
+            $t->foreignId('store_id')->nullable()->constrained()->nullOnDelete();
             $t->foreignId('cashier_user_id')->constrained('users')->cascadeOnDelete();
             $t->timestamp('redeemed_at')->useCurrent();
             $t->string('pos_reference')->nullable();

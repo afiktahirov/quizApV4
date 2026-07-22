@@ -10,7 +10,7 @@ return new class extends Migration {
             $t->id();
             $t->foreignId('question_id')->constrained()->cascadeOnDelete();
             $t->foreignId('question_category_id')->constrained()->cascadeOnDelete();
-            $t->primary(['question_id','question_category_id']);
+            $t->unique(['question_id','question_category_id'], 'qcq_question_category_unique');
         });
     }
     public function down(): void {

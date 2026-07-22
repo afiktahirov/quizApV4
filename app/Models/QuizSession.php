@@ -7,8 +7,9 @@ class QuizSession extends Model
 {
     use HasFactory;
     public $timestamps = false; // started_at/finished_at sahələri istifadə olunur
-    protected $fillable = ['merchant_id', 'store_id', 'quiz_id', 'customer_id', 'started_at', 'finished_at', 'score_pct', 'is_passed', 'ip', 'device_fingerprint', 'channel'];
+    protected $fillable = ['merchant_id', 'store_id', 'quiz_id', 'customer_id', 'guest_token', 'question_ids', 'started_at', 'finished_at', 'score_pct', 'correct_count', 'is_passed', 'ip', 'device_fingerprint', 'channel'];
     protected $casts = [
+        'question_ids' => 'array',
         'started_at' => 'datetime',
         'finished_at' => 'datetime',
         'is_passed' => 'boolean',
@@ -40,9 +41,4 @@ class QuizSession extends Model
     {
         return $this->belongsTo(Customer::class);
     }
-    public function merchants()
-    {
-        return $this->hasManyThrough(Merchant::class, Quiz::class);
-    }
-
 }

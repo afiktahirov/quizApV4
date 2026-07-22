@@ -3,41 +3,48 @@
 namespace App\Models;
 
 use Filament\Models\Contracts\FilamentUser;
-use Filament\Models\Contracts\HasTenants;
 use Filament\Panel;
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Foundation\Auth\User as Authenticatable;
-use Illuminate\Support\Collection;
+use Laravel\Sanctum\HasApiTokens;
 
-class User extends Authenticatable implements FilamentUser, HasTenants
+class User extends Authenticatable implements FilamentUser
 {
+    use HasApiTokens;
 
-    protected $fillable = ['name', 'email', 'password', 'merchant_id'];
+    public const ROLE_SUPER_ADMIN    = 'super_admin';
+    public const ROLE_MERCHANT_ADMIN = 'merchant_admin';
+    public const ROLE_CASHIER        = 'cashier';
 
-    public function teams(): BelongsToMany
+    protected $fillable = ['name', 'email', 'password', 'merchant_id', 'role'];
+
+    protected $hidden = ['password', 'remember_token'];
+
+    protected $casts = ['password' => 'hashed'];
+
+    public function merchant(): BelongsTo
     {
-        return $this->belongsToMany(Merchant::class);
+        return $this->belongsTo(Merchant::class);
     }
-
 
     public function getIsAdminAttribute(): bool
     {
-        return in_array($this->role, ['admin', 'super_admin']);
+        return $this->role === self::ROLE_SUPER_ADMIN;
     }
 
-    public function getTenants(Panel $panel): Collection
+    public function isMerchantAdmin(): bool
     {
-        return $this->teams;
+        return $this->role === self::ROLE_MERCHANT_ADMIN;
     }
 
     public function canAccessPanel(Panel $panel): bool
     {
-        return str_ends_with($this->email, '@gmail.com');
-    }
+        // super admin həmişə girir; merchant istifadəçiləri yalnız merchant-a bağlıdırsa
+        if ($this->role === self::ROLE_SUPER_ADMIN) {
+            return true;
+        }
 
-    public function canAccessTenant(Model $tenant): bool
-    {
-        return $this->teams()->whereKey($tenant)->exists();
+        return in_array($this->role, [self::ROLE_MERCHANT_ADMIN, self::ROLE_CASHIER], true)
+            && $this->merchant_id !== null;
     }
 }

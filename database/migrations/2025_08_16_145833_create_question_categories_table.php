@@ -8,6 +8,8 @@ return new class extends Migration {
     public function up(): void {
         Schema::create('question_categories', function (Blueprint $t) {
             $t->id();
+            // null => qlobal kateqoriya (super admin yaradır, hazır sual bazası üçün)
+            $t->foreignId('merchant_id')->nullable()->constrained()->cascadeOnDelete();
             $t->string('name');
             $t->string('slug')->unique();
             $t->enum('status',['active','inactive'])->default('active');

@@ -8,6 +8,8 @@ return new class extends Migration {
     public function up(): void {
         Schema::create('questions', function (Blueprint $t) {
             $t->id();
+            // null => qlobal sual bazası (super admin yaradır, bütün merchant-lar istifadə edə bilər)
+            $t->foreignId('merchant_id')->nullable()->constrained()->cascadeOnDelete();
             $t->text('title');
             $t->enum('type',['mcq','true_false'])->default('mcq');
             $t->string('difficulty')->nullable(); // easy/medium/hard və s.
