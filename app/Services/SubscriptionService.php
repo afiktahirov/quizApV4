@@ -5,8 +5,10 @@ namespace App\Services;
 use App\Models\Merchant;
 use App\Models\MerchantSubscription;
 use App\Models\Plan;
+use App\Models\SubscriptionRequest;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 
 class SubscriptionService
 {
@@ -50,6 +52,60 @@ class SubscriptionService
                 'created_by' => $by?->id,
             ]);
         });
+    }
+
+    /**
+     * Mağaza öz adına paket sorğusu yaradır (onlayn ödəniş inteqrasiyası gələnə qədər
+     * super admin bu sorğunu əl ilə təsdiqləyir). Eyni anda bir aktiv (pending) sorğu ola bilər.
+     */
+    public function requestUpgrade(Merchant $merchant, Plan $plan, int $periods = 1): SubscriptionRequest
+    {
+        if ($merchant->subscriptionRequests()->where('status', 'pending')->exists()) {
+            throw ValidationException::withMessages([
+                'plan_id' => 'Artıq gözləmədə olan bir sorğunuz var.',
+            ]);
+        }
+
+        $periods = max(1, $periods);
+
+        return $merchant->subscriptionRequests()->create([
+            'plan_id'  => $plan->id,
+            'periods'  => $periods,
+            'amount'   => (float) $plan->price * $periods,
+            'currency' => $plan->currency,
+            'status'   => 'pending',
+        ]);
+    }
+
+    /** Super admin sorğunu təsdiqləyir → abunəlik faktiki tətbiq olunur. */
+    public function approve(SubscriptionRequest $request, User $by): void
+    {
+        DB::transaction(function () use ($request, $by) {
+            $this->grant($request->merchant, $request->plan, $request->periods, $by, 'Sorğu #' . $request->id . ' üzrə təsdiq');
+
+            $request->update([
+                'status'      => 'approved',
+                'reviewed_by' => $by->id,
+                'reviewed_at' => now(),
+            ]);
+        });
+    }
+
+    /** Super admin sorğunu rədd edir. */
+    public function reject(SubscriptionRequest $request, User $by, ?string $note = null): void
+    {
+        $request->update([
+            'status'      => 'rejected',
+            'note'        => $note,
+            'reviewed_by' => $by->id,
+            'reviewed_at' => now(),
+        ]);
+    }
+
+    /** Mağaza öz gözləmədəki sorğusunu ləğv edir. */
+    public function cancelRequest(SubscriptionRequest $request): void
+    {
+        $request->update(['status' => 'cancelled']);
     }
 
     /** Merchant-ı bloklayır (abunəlik statusu inactive). */

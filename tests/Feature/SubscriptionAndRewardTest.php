@@ -154,4 +154,95 @@ class SubscriptionAndRewardTest extends TestCase
         $svc->unblock($m);
         $this->assertEquals('active', $m->fresh()->status);
     }
+
+    public function test_request_upgrade_creates_pending_request(): void
+    {
+        $plan = Plan::create([
+            'name' => 'Pro', 'slug' => 'pro', 'price' => 50, 'currency' => 'AZN',
+            'billing_period' => 'monthly',
+        ]);
+        $m   = $this->makeMerchant();
+        $svc = app(SubscriptionService::class);
+
+        $request = $svc->requestUpgrade($m, $plan, 3);
+
+        $this->assertEquals('pending', $request->status);
+        $this->assertEquals('150.00', $request->amount); // 50 * 3 dövr
+        $this->assertEquals(1, $m->subscriptionRequests()->count());
+    }
+
+    public function test_cannot_request_upgrade_while_a_request_is_pending(): void
+    {
+        $plan = Plan::create([
+            'name' => 'Pro', 'slug' => 'pro', 'price' => 50, 'currency' => 'AZN',
+            'billing_period' => 'monthly',
+        ]);
+        $m   = $this->makeMerchant();
+        $svc = app(SubscriptionService::class);
+
+        $svc->requestUpgrade($m, $plan, 1);
+
+        $this->expectException(\Illuminate\Validation\ValidationException::class);
+        $svc->requestUpgrade($m, $plan, 1);
+    }
+
+    public function test_approve_request_grants_subscription(): void
+    {
+        $plan = Plan::create([
+            'name' => 'Pro', 'slug' => 'pro', 'price' => 50, 'currency' => 'AZN',
+            'billing_period' => 'monthly',
+        ]);
+        $m       = $this->makeMerchant(['subscription_ends_at' => null]);
+        $admin   = \App\Models\User::create([
+            'name' => 'Admin', 'email' => 'admin-' . uniqid() . '@test.com',
+            'password' => 'x', 'role' => \App\Models\User::ROLE_SUPER_ADMIN,
+        ]);
+        $svc     = app(SubscriptionService::class);
+        $request = $svc->requestUpgrade($m, $plan, 1);
+
+        $svc->approve($request, $admin);
+
+        $this->assertEquals('approved', $request->fresh()->status);
+        $this->assertEquals($admin->id, $request->fresh()->reviewed_by);
+        $this->assertEquals($plan->id, $m->fresh()->plan_id);
+        $this->assertTrue($m->fresh()->isSubscribed());
+    }
+
+    public function test_reject_request_does_not_change_merchant_plan(): void
+    {
+        $plan = Plan::create([
+            'name' => 'Pro', 'slug' => 'pro', 'price' => 50, 'currency' => 'AZN',
+            'billing_period' => 'monthly',
+        ]);
+        $m       = $this->makeMerchant();
+        $admin   = \App\Models\User::create([
+            'name' => 'Admin', 'email' => 'admin-' . uniqid() . '@test.com',
+            'password' => 'x', 'role' => \App\Models\User::ROLE_SUPER_ADMIN,
+        ]);
+        $svc     = app(SubscriptionService::class);
+        $request = $svc->requestUpgrade($m, $plan, 1);
+
+        $svc->reject($request, $admin, 'test səbəbi');
+
+        $this->assertEquals('rejected', $request->fresh()->status);
+        $this->assertNull($m->fresh()->plan_id);
+    }
+
+    public function test_cancel_request_allows_new_request(): void
+    {
+        $plan = Plan::create([
+            'name' => 'Pro', 'slug' => 'pro', 'price' => 50, 'currency' => 'AZN',
+            'billing_period' => 'monthly',
+        ]);
+        $m       = $this->makeMerchant();
+        $svc     = app(SubscriptionService::class);
+        $request = $svc->requestUpgrade($m, $plan, 1);
+
+        $svc->cancelRequest($request);
+        $this->assertEquals('cancelled', $request->fresh()->status);
+
+        // artıq gözləyən sorğu yoxdur, yenisi yaradıla bilər
+        $second = $svc->requestUpgrade($m, $plan, 2);
+        $this->assertEquals('pending', $second->status);
+    }
 }
