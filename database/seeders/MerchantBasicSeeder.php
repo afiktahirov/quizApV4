@@ -19,7 +19,11 @@ class MerchantBasicSeeder extends Seeder
             [
                 'name'                 => 'Demo Restoran',
                 'status'               => 'active',
-                'bio'                  => 'Demo restoran hesabı',
+                'bio'                  => [
+                    'az' => 'Demo restoran hesabı',
+                    'en' => 'Demo restaurant account',
+                    'ru' => 'Демо-аккаунт ресторана',
+                ],
                 'address'              => '28 May küçəsi 10, Bakı',
                 'latitude'             => 40.3777,
                 'longitude'            => 49.8920,
@@ -172,16 +176,24 @@ class MerchantBasicSeeder extends Seeder
             ['name' => 'Welcome Promo', 'status' => 'active'],
         );
 
-        $quiz = Quiz::firstOrCreate(
-            ['merchant_id' => $merchant->id, 'title' => 'Giriş Kampaniyası'],
-            [
-                'store_id'           => $store->id,
-                'quiz_category_id'   => $quizCat->id,
-                'total_questions'    => 5,
-                'pass_threshold_pct' => 60,
-                'status'             => 'active',
+        // Başlıq çoxdilli JSON-dur — where-də az dəyəri üzrə axtarılır
+        $quiz = Quiz::where('merchant_id', $merchant->id)
+            ->where('title->az', 'Giriş Kampaniyası')
+            ->first();
+
+        $quiz ??= Quiz::create([
+            'merchant_id'        => $merchant->id,
+            'title'              => [
+                'az' => 'Giriş Kampaniyası',
+                'en' => 'Welcome Campaign',
+                'ru' => 'Приветственная кампания',
             ],
-        );
+            'store_id'           => $store->id,
+            'quiz_category_id'   => $quizCat->id,
+            'total_questions'    => 5,
+            'pass_threshold_pct' => 60,
+            'status'             => 'active',
+        ]);
 
         $allIds = array_merge($globalIds, $ownIds);
         $quiz->questions()->syncWithoutDetaching(

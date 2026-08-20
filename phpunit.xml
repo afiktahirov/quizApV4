@@ -30,5 +30,8 @@
         <env name="PULSE_ENABLED" value="false"/>
         <env name="TELESCOPE_ENABLED" value="false"/>
         <env name="NIGHTWATCH_ENABLED" value="false"/>
+        <!-- Mövcud quiz testləri oyun mexanikasını yoxlayır; abunəlik qapısı
+             ayrıca CustomerSubscriptionGateTest-də test olunur. -->
+        <env name="CUSTOMER_SUBSCRIPTION_GATE" value="off"/>
     </php>
 </phpunit>

@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\Quizzes\Tables;
 
 use App\Filament\Resources\Quizzes\QuizResource;
+use App\Support\Translatable;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
@@ -20,6 +21,9 @@ class QuizzesTable
             ->columns([
                 TextColumn::make('title')
                     ->label('Başlıq')
+                    // Başlıq çoxdillidir ({az,en,ru}) — massiv siyahı kimi render olunmasın deyə
+                    // state() ilə tək mətnə çevrilir (QuestionsTable-dakı ilə eyni üsul)
+                    ->state(fn ($record) => Translatable::text($record->title, app()->getLocale()))
                     ->searchable(),
                 TextColumn::make('merchant.name')
                     ->label('Müəssisə')

@@ -8,8 +8,6 @@ use Illuminate\Http\Resources\Json\JsonResource;
 class MerchantResource extends JsonResource
 {
     /**
-     * Transform the resource into an array.
-     *
      * @return array<string, mixed>
      */
     public function toArray(Request $request): array
@@ -18,8 +16,10 @@ class MerchantResource extends JsonResource
             'id'        => $this->id,
             'name'      => $this->name,
             'slug'      => $this->slug,
+            // Çoxdilli mətn — dili front seçir (bax: src/i18n)
             'bio'       => $this->bio,
             'photo'     => $this->photo ? asset('storage/' . $this->photo) : null,
+            'banner'    => $this->banner ? asset('storage/' . $this->banner) : null,
             'address'   => $this->address,
             'latitude'  => $this->latitude !== null ? (float) $this->latitude : null,
             'longitude' => $this->longitude !== null ? (float) $this->longitude : null,

@@ -17,6 +17,7 @@ use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model as EloquentModel;
 
 class QuizResource extends Resource
 {
@@ -38,7 +39,13 @@ class QuizResource extends Resource
 
     protected static ?int $navigationSort = 2;
 
-    protected static ?string $recordTitleAttribute = 'title';
+    // Başlıq çoxdilli JSON olduğu üçün atribut kimi yox, getRecordTitle() ilə həll olunur
+    protected static ?string $recordTitleAttribute = null;
+
+    public static function getRecordTitle(?EloquentModel $record): ?string
+    {
+        return $record instanceof Quiz ? $record->titleText(app()->getLocale()) : null;
+    }
 
     public static function getLabel(): string
     {

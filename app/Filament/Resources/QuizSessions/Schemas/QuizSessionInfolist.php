@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\QuizSessions\Schemas;
 
+use App\Support\Translatable;
 use Filament\Infolists\Components\IconEntry;
 use Filament\Infolists\Components\TextEntry;
 use Filament\Schemas\Schema;
@@ -14,7 +15,9 @@ class QuizSessionInfolist
             ->components([
                 TextEntry::make('customer.name')->label('Müştəri'),
                 TextEntry::make('customer.phone')->label('Telefon'),
-                TextEntry::make('quiz.title')->label('Kampaniya'),
+                TextEntry::make('quiz.title')
+                    ->label('Kampaniya')
+                    ->state(fn ($record) => Translatable::text($record->quiz?->title, app()->getLocale())),
                 TextEntry::make('store.name')->label('Filial')->placeholder('-'),
                 TextEntry::make('started_at')->label('Başlama')->dateTime('d.m.Y H:i'),
                 TextEntry::make('finished_at')->label('Bitmə')->dateTime('d.m.Y H:i')->placeholder('-'),

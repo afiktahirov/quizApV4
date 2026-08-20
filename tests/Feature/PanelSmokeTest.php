@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\Merchant;
+use App\Models\Quiz;
 use App\Models\User;
 use Database\Seeders\MerchantBasicSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -145,5 +146,16 @@ class PanelSmokeTest extends TestCase
 
         $this->actingAs($user)->get('/abuneliyim')->assertSuccessful();
         $this->actingAs($user)->get('/magazam')->assertSuccessful();
+    }
+
+    /** Çoxdilli sahələr (kampaniya başlığı, mağaza "haqqında") redaktə formalarında açılır */
+    public function test_translatable_fields_render_on_edit_pages(): void
+    {
+        $admin    = User::where('email', 'superadmin@quizapp.test')->firstOrFail();
+        $quiz     = Quiz::firstOrFail();
+        $merchant = Merchant::firstOrFail();
+
+        $this->actingAs($admin)->get("/quizzes/{$quiz->id}/edit")->assertSuccessful();
+        $this->actingAs($admin)->get("/merchants/{$merchant->id}/edit")->assertSuccessful();
     }
 }

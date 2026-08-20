@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\QuizSessions\Tables;
 
+use App\Support\Translatable;
 use Filament\Actions\ViewAction;
 use Filament\Tables\Columns\IconColumn;
 use Filament\Tables\Columns\TextColumn;
@@ -26,6 +27,8 @@ class QuizSessionsTable
 
                 TextColumn::make('quiz.title')
                     ->label('Kampaniya')
+                    // Kampaniya başlığı çoxdillidir ({az,en,ru}) — tək mətnə çevrilir
+                    ->state(fn ($record) => Translatable::text($record->quiz?->title, app()->getLocale()))
                     ->sortable()
                     ->searchable()
                     ->limit(60),

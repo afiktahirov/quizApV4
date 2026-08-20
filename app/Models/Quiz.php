@@ -1,6 +1,7 @@
 <?php
 namespace App\Models;
 
+use App\Support\Translatable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -13,6 +14,17 @@ class Quiz extends Model
         'total_questions', 'pass_threshold_pct', 'time_per_question_sec', 'status',
         'reward_mode',
     ];
+
+    protected $casts = [
+        // {"az": "...", "en": "...", "ru": "..."} — dili front seçir (bax: src/i18n)
+        'title' => 'array',
+    ];
+
+    /** Panel/loglar üçün başlığın oxunaqlı mətni */
+    public function titleText(?string $locale = null): string
+    {
+        return Translatable::text($this->title, $locale);
+    }
 
     public function merchant()
     {

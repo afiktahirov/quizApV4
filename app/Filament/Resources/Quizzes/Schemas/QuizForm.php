@@ -29,7 +29,12 @@ class QuizForm
                     ->label('Kateqoriya')
                     ->nullable(),
 
-                TextInput::make('title')->label('Başlıq')->required()->maxLength(255),
+                // 3 dildə doldurulur (az/en/ru) — front istifadəçinin seçdiyi dili göstərir
+                TextInput::make('title')
+                    ->label('Başlıq')
+                    ->required()
+                    ->maxLength(255)
+                    ->translatable(),
 
                 TextInput::make('total_questions')
                     ->numeric()->minValue(1)->maxValue(50)->default(5)

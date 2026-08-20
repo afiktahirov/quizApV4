@@ -9,26 +9,36 @@ use Illuminate\Http\Request;
 class AdController extends Controller
 {
     /**
-     * Aktiv reklamlar (tarix aralığına düşən). merchant_id ilə filter etmək olar.
+     * Göstərilməli reklamlar. merchant_id verilsə yalnız həmin mağazanın,
+     * verilməsə bütün aktiv reklamlar qaytarılır (ana səhifə üçün).
+     *
+     * Mətnlər {az,en,ru} obyekti kimi gedir — dili front seçir (bax: src/i18n).
      */
     public function index(Request $request)
     {
-        $request->validate(['merchant_id' => 'nullable|integer']);
+        $data = $request->validate([
+            'merchant_id' => 'nullable|integer',
+            'limit'       => 'nullable|integer|min:1|max:50',
+        ]);
 
         $ads = Ad::query()
-            ->where('status', 'active')
-            ->where(fn ($q) => $q->whereNull('starts_at')->orWhere('starts_at', '<=', now()))
-            ->where(fn ($q) => $q->whereNull('ends_at')->orWhere('ends_at', '>=', now()))
-            ->when($request->merchant_id, fn ($q, $id) => $q->where('merchant_id', $id))
+            ->visible()
+            // Abunəliyi bitmiş mağazanın reklamı göstərilmir
+            ->where(fn ($q) => $q->whereNull('merchant_id')
+                ->orWhereHas('merchant', fn ($m) => $m->subscribed()))
+            ->when($data['merchant_id'] ?? null, fn ($q, $id) => $q->where('merchant_id', $id))
+            ->with('merchant:id,name,slug')
             ->latest()
+            ->limit($data['limit'] ?? 20)
             ->get();
 
         return response()->json([
-            'ads' => $ads->map(fn ($ad) => [
+            'ads' => $ads->map(fn (Ad $ad) => [
                 'id'          => $ad->id,
                 'merchant_id' => $ad->merchant_id,
+                'merchant'    => $ad->merchant?->only(['id', 'name', 'slug']),
                 'title'       => $ad->title,
-                'image'       => $ad->image_path ? asset('storage/' . $ad->image_path) : null,
+                'image'       => $ad->imageUrl(),
                 'content'     => $ad->content,
                 'starts_at'   => $ad->starts_at,
                 'ends_at'     => $ad->ends_at,

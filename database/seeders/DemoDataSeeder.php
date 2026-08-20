@@ -56,6 +56,9 @@ class DemoDataSeeder extends Seeder
         ]);
 
         $this->seedUiTexts();
+        // React tərəfindəki dictionary-nin bütün açarlarını panelə çıxarır
+        // (mövcud sətirlərə toxunmur) — bax: UiTextSeeder.
+        $this->call([UiTextSeeder::class]);
         $globalCategoryIds = $this->seedGlobalQuestionPools();
         $quizCategoryIds   = $this->seedQuizCategories();
         $this->customers   = $this->seedCustomers();
@@ -262,7 +265,7 @@ class DemoDataSeeder extends Seeder
             // ---------------- Şirvan Kababxana ----------------
             [
                 'slug' => 'shirvan-kababxana', 'name' => 'Şirvan Kababxana',
-                'bio'  => 'Bakının mərkəzində ənənəvi Azərbaycan mətbəxi restoranı. Kabab, plov və milli yeməklərin ən dadlı ünvanı.',
+                'bio'  => $this->t('Bakının mərkəzində ənənəvi Azərbaycan mətbəxi restoranı. Kabab, plov və milli yeməklərin ən dadlı ünvanı.', 'A traditional Azerbaijani restaurant in central Baku — the tastiest address for kabab, plov and national dishes.', 'Ресторан традиционной азербайджанской кухни в центре Баку — кебаб, плов и национальные блюда.'),
                 'address' => 'Nizami küçəsi 45, Bakı', 'latitude' => 40.3725, 'longitude' => 49.8442,
                 'coupon_discount_type' => 'percent', 'coupon_value' => 15, 'coupon_ttl_hours' => 72,
                 'plan_slug' => 'standard', 'sub_end_days' => 45, 'status' => 'active',
@@ -288,20 +291,20 @@ class DemoDataSeeder extends Seeder
                 'global_pools' => ['yemek', 'umumi'],
                 'quiz_category' => $qc['restoran-kampaniyalari'],
                 'quizzes' => [
-                    ['title' => 'Kabab Bilicisi', 'total' => 5, 'pass' => 60, 'time' => 20, 'status' => 'active', 'reward_mode' => 'flat', 'sessions' => 12],
-                    ['title' => 'Milli Mətbəx Yarışı', 'total' => 4, 'pass' => 50, 'time' => 15, 'status' => 'active', 'reward_mode' => 'tiered',
+                    ['title' => $this->t('Kabab Bilicisi', 'Kabab Expert', 'Знаток кебаба'), 'total' => 5, 'pass' => 60, 'time' => 20, 'status' => 'active', 'reward_mode' => 'flat', 'sessions' => 12],
+                    ['title' => $this->t('Milli Mətbəx Yarışı', 'National Cuisine Challenge', 'Викторина о национальной кухне'), 'total' => 4, 'pass' => 50, 'time' => 15, 'status' => 'active', 'reward_mode' => 'tiered',
                         'tiers' => [[2, 'percent', 5], [3, 'percent', 10], [4, 'percent', 20]], 'sessions' => 10],
                 ],
                 'ads' => [
-                    ['title' => 'Cümə Axşamı Ailə Endirimi', 'status' => 'active', 'starts' => -10, 'ends' => 20],
-                    ['title' => 'Yeni Saj Menyusu', 'status' => 'active', 'starts' => -2, 'ends' => null],
+                    ['title' => $this->t('Cümə Axşamı Ailə Endirimi', 'Thursday Family Discount', 'Семейная скидка по четвергам'), 'status' => 'active', 'starts' => -10, 'ends' => 20],
+                    ['title' => $this->t('Yeni Saj Menyusu', 'New Saj Menu', 'Новое меню садж'), 'status' => 'active', 'starts' => -2, 'ends' => null],
                 ],
             ],
 
             // ---------------- Rəngarəng Kafe ----------------
             [
                 'slug' => 'rengareng-kafe', 'name' => 'Rəngarəng Kafe',
-                'bio'  => 'Şirin dadlar və məhəbbətlə hazırlanan kofe növləri ilə tanınan butik kafe.',
+                'bio'  => $this->t('Şirin dadlar və məhəbbətlə hazırlanan kofe növləri ilə tanınan butik kafe.', 'A boutique cafe known for sweet treats and coffee made with love.', 'Бутик-кафе, известное десертами и кофе, приготовленным с любовью.'),
                 'address' => 'Neftçilər prospekti 5, Bakı', 'latitude' => 40.3650, 'longitude' => 49.8350,
                 'coupon_discount_type' => 'amount', 'coupon_value' => 3, 'coupon_ttl_hours' => 24,
                 'plan_slug' => 'basic', 'sub_end_days' => 3, 'status' => 'active',
@@ -325,20 +328,20 @@ class DemoDataSeeder extends Seeder
                 'global_pools' => ['yemek', 'umumi'],
                 'quiz_category' => $qc['kafe-kampaniyalari'],
                 'quizzes' => [
-                    ['title' => 'Şirniyyat Sevgilisi', 'total' => 5, 'pass' => 70, 'time' => 15, 'status' => 'active', 'reward_mode' => 'flat', 'sessions' => 14],
-                    ['title' => 'Kofe Ustası', 'total' => 4, 'pass' => 50, 'time' => 15, 'status' => 'active', 'reward_mode' => 'tiered',
+                    ['title' => $this->t('Şirniyyat Sevgilisi', 'Dessert Lover', 'Любитель сладкого'), 'total' => 5, 'pass' => 70, 'time' => 15, 'status' => 'active', 'reward_mode' => 'flat', 'sessions' => 14],
+                    ['title' => $this->t('Kofe Ustası', 'Coffee Master', 'Мастер кофе'), 'total' => 4, 'pass' => 50, 'time' => 15, 'status' => 'active', 'reward_mode' => 'tiered',
                         'tiers' => [[2, 'percent', 5], [3, 'percent', 8], [4, 'percent', 15]], 'sessions' => 9],
                 ],
                 'ads' => [
-                    ['title' => 'Səhər Kofe Kampaniyası', 'status' => 'active', 'starts' => -5, 'ends' => 10],
-                    ['title' => 'Qış Şirniyyat Kolleksiyası', 'status' => 'inactive', 'starts' => -60, 'ends' => -10],
+                    ['title' => $this->t('Səhər Kofe Kampaniyası', 'Morning Coffee Deal', 'Утренняя кофейная акция'), 'status' => 'active', 'starts' => -5, 'ends' => 10],
+                    ['title' => $this->t('Qış Şirniyyat Kolleksiyası', 'Winter Dessert Collection', 'Зимняя коллекция десертов'), 'status' => 'inactive', 'starts' => -60, 'ends' => -10],
                 ],
             ],
 
             // ---------------- FitLife İdman Zalı ----------------
             [
                 'slug' => 'fitlife-idman-zali', 'name' => 'FitLife İdman Zalı',
-                'bio'  => 'Müasir avadanlıqlarla təchiz olunmuş, təcrübəli məşqçi heyəti olan idman zalı.',
+                'bio'  => $this->t('Müasir avadanlıqlarla təchiz olunmuş, təcrübəli məşqçi heyəti olan idman zalı.', 'A gym with modern equipment and an experienced coaching team.', 'Спортзал с современным оборудованием и опытными тренерами.'),
                 'address' => 'H. Zərdabi prospekti 88, Bakı', 'latitude' => 40.3960, 'longitude' => 49.8080,
                 'coupon_discount_type' => 'percent', 'coupon_value' => 20, 'coupon_ttl_hours' => 168,
                 'plan_slug' => 'premium', 'sub_end_days' => 300, 'status' => 'active',
@@ -362,20 +365,20 @@ class DemoDataSeeder extends Seeder
                 'global_pools' => ['idman-saglamlik', 'umumi'],
                 'quiz_category' => $qc['idman-kampaniyalari'],
                 'quizzes' => [
-                    ['title' => 'Fitness Bilgin', 'total' => 4, 'pass' => 50, 'time' => 20, 'status' => 'active', 'reward_mode' => 'tiered',
+                    ['title' => $this->t('Fitness Bilgin', 'Fitness Guru', 'Знаток фитнеса'), 'total' => 4, 'pass' => 50, 'time' => 20, 'status' => 'active', 'reward_mode' => 'tiered',
                         'tiers' => [[2, 'percent', 10], [3, 'percent', 15], [4, 'percent', 25]], 'sessions' => 11],
-                    ['title' => 'Yeni Üzv Kampaniyası', 'total' => 5, 'pass' => 60, 'time' => 15, 'status' => 'draft', 'reward_mode' => 'flat', 'sessions' => 0],
+                    ['title' => $this->t('Yeni Üzv Kampaniyası', 'New Member Campaign', 'Кампания для новых участников'), 'total' => 5, 'pass' => 60, 'time' => 15, 'status' => 'draft', 'reward_mode' => 'flat', 'sessions' => 0],
                 ],
                 'ads' => [
-                    ['title' => 'Yeni İl Abunəlik Endirimi', 'status' => 'active', 'starts' => -3, 'ends' => 27],
-                    ['title' => 'Şəxsi Məşqçi Paketi', 'status' => 'inactive', 'starts' => null, 'ends' => null],
+                    ['title' => $this->t('Yeni İl Abunəlik Endirimi', 'New Year Membership Discount', 'Новогодняя скидка на абонемент'), 'status' => 'active', 'starts' => -3, 'ends' => 27],
+                    ['title' => $this->t('Şəxsi Məşqçi Paketi', 'Personal Trainer Package', 'Пакет с личным тренером'), 'status' => 'inactive', 'starts' => null, 'ends' => null],
                 ],
             ],
 
             // ---------------- Bella Gözəllik Salonu ----------------
             [
                 'slug' => 'bella-gozellik-salonu', 'name' => 'Bella Gözəllik Salonu',
-                'bio'  => 'Saç, dırnaq və dəri baxımı üzrə peşəkar gözəllik salonu.',
+                'bio'  => $this->t('Saç, dırnaq və dəri baxımı üzrə peşəkar gözəllik salonu.', 'A professional beauty salon for hair, nail and skin care.', 'Профессиональный салон красоты: волосы, ногти и уход за кожей.'),
                 'address' => 'Bülbül prospekti 30, Bakı', 'latitude' => 40.3660, 'longitude' => 49.8480,
                 'coupon_discount_type' => 'percent', 'coupon_value' => 12, 'coupon_ttl_hours' => 48,
                 'plan_slug' => 'basic', 'sub_end_days' => -10, 'status' => 'inactive',
@@ -397,18 +400,18 @@ class DemoDataSeeder extends Seeder
                 'global_pools' => ['gozellik', 'umumi'],
                 'quiz_category' => $qc['gozellik-kampaniyalari'],
                 'quizzes' => [
-                    ['title' => 'Yay Kampaniyası', 'total' => 4, 'pass' => 60, 'time' => 15, 'status' => 'archived', 'reward_mode' => 'flat', 'sessions' => 9],
-                    ['title' => 'Gözəllik Sirləri', 'total' => 4, 'pass' => 55, 'time' => 15, 'status' => 'draft', 'reward_mode' => 'flat', 'sessions' => 0],
+                    ['title' => $this->t('Yay Kampaniyası', 'Summer Campaign', 'Летняя кампания'), 'total' => 4, 'pass' => 60, 'time' => 15, 'status' => 'archived', 'reward_mode' => 'flat', 'sessions' => 9],
+                    ['title' => $this->t('Gözəllik Sirləri', 'Beauty Secrets', 'Секреты красоты'), 'total' => 4, 'pass' => 55, 'time' => 15, 'status' => 'draft', 'reward_mode' => 'flat', 'sessions' => 0],
                 ],
                 'ads' => [
-                    ['title' => 'Gəlin Saçı Kampaniyası', 'status' => 'inactive', 'starts' => -40, 'ends' => -5],
+                    ['title' => $this->t('Gəlin Saçı Kampaniyası', 'Bridal Hair Offer', 'Акция на свадебные причёски'), 'status' => 'inactive', 'starts' => -40, 'ends' => -5],
                 ],
             ],
 
             // ---------------- TechMarket Elektronika ----------------
             [
                 'slug' => 'techmarket-elektronika', 'name' => 'TechMarket Elektronika',
-                'bio'  => 'Son texnologiya smartfon, noutbuk və məişət texnikası satışı.',
+                'bio'  => $this->t('Son texnologiya smartfon, noutbuk və məişət texnikası satışı.', 'Latest smartphones, laptops and home appliances.', 'Современные смартфоны, ноутбуки и бытовая техника.'),
                 'address' => '28 Mall, 28 May küçəsi, Bakı', 'latitude' => 40.3900, 'longitude' => 49.8560,
                 'coupon_discount_type' => 'amount', 'coupon_value' => 25, 'coupon_ttl_hours' => 96,
                 'plan_slug' => 'standard', 'sub_end_days' => 1, 'status' => 'active',
@@ -430,13 +433,13 @@ class DemoDataSeeder extends Seeder
                 'global_pools' => ['texnologiya', 'umumi'],
                 'quiz_category' => $qc['texnologiya-kampaniyalari'],
                 'quizzes' => [
-                    ['title' => 'Tech Bilici', 'total' => 5, 'pass' => 60, 'time' => 20, 'status' => 'active', 'reward_mode' => 'flat', 'sessions' => 13],
-                    ['title' => 'Ağıllı Ev Bilicisi', 'total' => 4, 'pass' => 50, 'time' => 20, 'status' => 'active', 'reward_mode' => 'tiered',
+                    ['title' => $this->t('Tech Bilici', 'Tech Expert', 'Знаток техники'), 'total' => 5, 'pass' => 60, 'time' => 20, 'status' => 'active', 'reward_mode' => 'flat', 'sessions' => 13],
+                    ['title' => $this->t('Ağıllı Ev Bilicisi', 'Smart Home Expert', 'Знаток умного дома'), 'total' => 4, 'pass' => 50, 'time' => 20, 'status' => 'active', 'reward_mode' => 'tiered',
                         'tiers' => [[2, 'percent', 5], [3, 'percent', 10], [4, 'percent', 18]], 'sessions' => 8],
                 ],
                 'ads' => [
-                    ['title' => 'Qara Cümə Endirimləri', 'status' => 'active', 'starts' => -1, 'ends' => 5],
-                    ['title' => 'Yay Distribyusiya Aksiyası', 'status' => 'active', 'starts' => 10, 'ends' => 40],
+                    ['title' => $this->t('Qara Cümə Endirimləri', 'Black Friday Deals', 'Скидки Чёрной пятницы'), 'status' => 'active', 'starts' => -1, 'ends' => 5],
+                    ['title' => $this->t('Yay Distribyusiya Aksiyası', 'Summer Distribution Sale', 'Летняя дистрибьюторская акция'), 'status' => 'active', 'starts' => 10, 'ends' => 40],
                 ],
             ],
         ];
@@ -524,18 +527,23 @@ class DemoDataSeeder extends Seeder
         $poolIds = array_values(array_unique($poolIds));
 
         foreach ($c['quizzes'] as $qCfg) {
-            $quiz = Quiz::firstOrCreate(
-                ['merchant_id' => $merchant->id, 'title' => $qCfg['title']],
-                [
-                    'store_id'              => $storeIds[0] ?? null,
-                    'quiz_category_id'      => $c['quiz_category'],
-                    'total_questions'       => $qCfg['total'],
-                    'pass_threshold_pct'    => $qCfg['pass'],
-                    'time_per_question_sec' => $qCfg['time'],
-                    'status'                => $qCfg['status'],
-                    'reward_mode'           => $qCfg['reward_mode'],
-                ],
-            );
+            // Başlıq çoxdilli JSON olduğu üçün where-də birbaşa massiv göndərilə bilməz —
+            // az dəyəri üzrə JSON yolu ilə axtarılır.
+            $quiz = Quiz::where('merchant_id', $merchant->id)
+                ->where('title->az', $qCfg['title']['az'])
+                ->first();
+
+            $quiz ??= Quiz::create([
+                'merchant_id'           => $merchant->id,
+                'title'                 => $qCfg['title'],
+                'store_id'              => $storeIds[0] ?? null,
+                'quiz_category_id'      => $c['quiz_category'],
+                'total_questions'       => $qCfg['total'],
+                'pass_threshold_pct'    => $qCfg['pass'],
+                'time_per_question_sec' => $qCfg['time'],
+                'status'                => $qCfg['status'],
+                'reward_mode'           => $qCfg['reward_mode'],
+            ]);
 
             $quiz->questions()->syncWithoutDetaching(
                 collect($poolIds)->mapWithKeys(fn ($id) => [$id => ['weight' => 1]])->all()
@@ -556,15 +564,27 @@ class DemoDataSeeder extends Seeder
         }
 
         foreach ($c['ads'] as $adCfg) {
-            Ad::firstOrCreate(
-                ['merchant_id' => $merchant->id, 'title' => $adCfg['title']],
-                [
-                    'content'   => '<p>' . $adCfg['title'] . ' — ' . $merchant->name . '.</p>',
-                    'status'    => $adCfg['status'],
-                    'starts_at' => $adCfg['starts'] !== null ? now()->addDays($adCfg['starts']) : null,
-                    'ends_at'   => $adCfg['ends'] !== null ? now()->addDays($adCfg['ends']) : null,
-                ],
-            );
+            // Reklam başlığı/məzmunu çoxdillidir — axtarış az dəyəri üzrə gedir
+            $title = is_array($adCfg['title']) ? $adCfg['title'] : $this->same($adCfg['title']);
+
+            $exists = Ad::where('merchant_id', $merchant->id)
+                ->where('title->az', $title['az'])
+                ->exists();
+
+            if ($exists) {
+                continue;
+            }
+
+            Ad::create([
+                'merchant_id' => $merchant->id,
+                'title'       => $title,
+                'content'     => collect($title)
+                    ->map(fn ($text) => '<p>' . $text . ' — ' . $merchant->name . '.</p>')
+                    ->all(),
+                'status'      => $adCfg['status'],
+                'starts_at'   => $adCfg['starts'] !== null ? now()->addDays($adCfg['starts']) : null,
+                'ends_at'     => $adCfg['ends'] !== null ? now()->addDays($adCfg['ends']) : null,
+            ]);
         }
     }
 
@@ -576,7 +596,7 @@ class DemoDataSeeder extends Seeder
             return;
         }
 
-        $quiz = Quiz::where('merchant_id', $merchant->id)->where('title', 'Giriş Kampaniyası')->first();
+        $quiz = Quiz::where('merchant_id', $merchant->id)->where('title->az', 'Giriş Kampaniyası')->first();
         if (! $quiz) {
             return;
         }

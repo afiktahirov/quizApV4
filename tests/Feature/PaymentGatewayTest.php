@@ -49,9 +49,10 @@ class PaymentGatewayTest extends TestCase
         ]);
 
         $gateway = new KapitalBankGateway(config('payments.providers.kapital_bank'));
-        $merchant = $this->makeMerchant();
 
-        $session = $gateway->createPayment($merchant, 'ref-1', 120.00, 'AZN', 'Test ödəniş');
+        // Şlüz artıq merchant-dan asılı deyil — həm mağaza, həm istifadəçi
+        // abunəliyi eyni metodu işlədir (bax: PaymentService::initiateForCustomer).
+        $session = $gateway->createPayment('ref-1', 120.00, 'AZN', 'Test ödəniş');
 
         $this->assertEquals('555', $session->externalOrderId);
         $this->assertEquals('https://txpgtst.kapitalbank.az/flex?id=555&password=secret-pass', $session->redirectUrl);

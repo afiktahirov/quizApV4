@@ -4,6 +4,7 @@ namespace App\Filament\Pages\Auth;
 
 use App\Models\Merchant;
 use App\Models\User;
+use App\Support\Translatable;
 use Filament\Auth\Pages\Register;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
@@ -66,7 +67,9 @@ class MerchantRegister extends Register
             'name'    => $data['merchant_name'],
             'slug'    => Str::slug($data['merchant_name']) . '-' . Str::lower(Str::random(6)),
             'status'  => 'active',
-            'bio'     => $data['bio'] ?? null,
+            // Qeydiyyatda tək dildə yazılır — çoxdilli formata salınır,
+            // sonra paneldən hər dil ayrıca redaktə oluna bilər
+            'bio'     => filled($data['bio'] ?? null) ? Translatable::make($data['bio']) : null,
             'address' => $data['address'] ?? null,
         ]);
 

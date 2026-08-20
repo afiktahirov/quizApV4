@@ -91,8 +91,11 @@ class MerchantForm
                 ->disabled(! $isAdmin)
                 ->dehydrated(),
 
+            // 3 dildə doldurulur (az/en/ru) — front istifadəçinin seçdiyi dili göstərir
             RichEditor::make('bio')
-                ->columnSpanFull(),
+                ->label('Haqqında')
+                ->columnSpanFull()
+                ->translatable(),
 
             // İstəsən lat/lng inputları da görünsün (sənin screenshot-da var)
             TextInput::make('latitude')
@@ -217,13 +220,27 @@ class MerchantForm
                 }),
 
             FileUpload::make('photo')
-                ->label('Foto')
+                ->label('Loqo / Foto')
+                ->helperText('Mağaza siyahısında və başlıqda görünür. Kvadrat şəkil tövsiyə olunur.')
                 ->image()
                 ->imageEditor()
                 ->directory('merchants')
                 ->disk('public')
                 ->visibility('public')
                 ->maxSize(2048)
+                ->acceptedFileTypes(['image/jpeg', 'image/png', 'image/webp'])
+                ->columnSpanFull(),
+
+            FileUpload::make('banner')
+                ->label('Arxa fon (banner)')
+                ->helperText('Mağaza səhifəsinin yuxarısında arxa fon kimi göstərilir. Geniş şəkil tövsiyə olunur (məs. 1600×600).')
+                ->image()
+                ->imageEditor()
+                ->imageEditorAspectRatios(['16:9', '21:9', '3:1'])
+                ->directory('merchants/banners')
+                ->disk('public')
+                ->visibility('public')
+                ->maxSize(4096)
                 ->acceptedFileTypes(['image/jpeg', 'image/png', 'image/webp'])
                 ->columnSpanFull(),
         ]);
