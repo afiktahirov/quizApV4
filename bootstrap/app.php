@@ -12,7 +12,10 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
-        //
+        $middleware->alias([
+            // Aktiv istifadəçi abunəliyi tələb edən marşrutlar üçün
+            'customer.subscribed' => \App\Http\Middleware\EnsureCustomerSubscribed::class,
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //

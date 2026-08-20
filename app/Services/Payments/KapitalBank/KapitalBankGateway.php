@@ -2,7 +2,6 @@
 
 namespace App\Services\Payments\KapitalBank;
 
-use App\Models\Merchant;
 use App\Models\Payment;
 use App\Services\Payments\PaymentGateway;
 use App\Services\Payments\PaymentGatewayException;
@@ -39,7 +38,6 @@ class KapitalBankGateway implements PaymentGateway
     }
 
     public function createPayment(
-        Merchant $merchant,
         string $referenceId,
         float $amount,
         string $currency,

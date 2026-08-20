@@ -51,6 +51,7 @@ class DemoDataSeeder extends Seeder
         $this->call([
             AdminSeeder::class,
             PlanSeeder::class,
+            CustomerPlanSeeder::class,
             MerchantBasicSeeder::class,
         ]);
 

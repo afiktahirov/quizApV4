@@ -122,6 +122,25 @@ class CustomerQuizController extends Controller
             'store_id'           => 'nullable|integer|exists:stores,id',
         ]);
 
+        // Abunəlik qapısı "play" rejimindədirsə oynamaq üçün aktiv abunəlik lazımdır
+        if ($this->subscriptionGate() === 'play') {
+            if (! $customer) {
+                return $this->subscriptionRequired('Quiz oynamaq üçün daxil olub abunə olmalısınız.');
+            }
+
+            if (! $customer->hasActiveSubscription()) {
+                return $this->subscriptionRequired('Quiz oynamaq üçün aktiv abunəliyiniz olmalıdır.');
+            }
+        }
+
+        // Paket limiti: gündəlik quiz sayı
+        if ($customer && $this->subscriptionGate() !== 'off' && ! $customer->canPlayMoreToday()) {
+            return response()->json([
+                'message' => 'Paketinizin gündəlik quiz limitinə çatmısınız. Sabah yenidən cəhd edin.',
+                'code'    => 'daily_limit_reached',
+            ], 429);
+        }
+
         $merchant = Merchant::subscribed()->findOrFail($data['merchant_id']);
         $quiz     = $this->findActiveQuiz($merchant, (int) $data['quiz_id']);
 
@@ -263,15 +282,13 @@ class CustomerQuizController extends Controller
 
         $session->refresh();
 
-        // Kupon yalnız qeydiyyatlı müştəriyə verilir. Qonaq üçün endirim potensialı
-        // hesablanır, amma kupon qeydiyyatdan sonra claim ilə yaradılır.
-        $isGuest = $session->customer_id === null;
-        $coupon  = $isGuest ? null : $this->couponService->issueForSession($session);
-
-        // Qonağa "qeydiyyatdan keçsən kupon qazanacaqsan?" məlumatı
-        $wouldEarn = $isGuest
-            ? $this->couponService->previewReward($session) !== null
-            : false;
+        // Kupon yalnız qeydiyyatlı VƏ aktiv abunəliyi olan müştəriyə verilir.
+        // Qonaq üçün endirim potensialı hesablanır, kupon isə claim mərhələsində yaradılır.
+        $isGuest    = $session->customer_id === null;
+        $customer   = $isGuest ? null : $session->customer;
+        $canEarn    = $this->canEarnCoupon($customer);
+        $coupon     = (! $isGuest && $canEarn) ? $this->couponService->issueForSession($session) : null;
+        $preview    = $this->couponService->previewReward($session);
 
         return response()->json([
             'score_pct'              => $session->score_pct,
@@ -279,8 +296,10 @@ class CustomerQuizController extends Controller
             'correct'                => $result['correct'],
             'total'                  => $result['total'],
             'coupon'                 => $coupon ? $this->couponPayload($coupon) : null,
-            'requires_registration'  => $isGuest && $wouldEarn,
-            'reward_preview'         => $isGuest ? $this->couponService->previewReward($session) : null,
+            'requires_registration'  => $isGuest && $preview !== null,
+            // Login olub, kupona haqq qazanıb, amma abunəliyi yoxdursa
+            'requires_subscription'  => ! $isGuest && ! $canEarn && $preview !== null,
+            'reward_preview'         => $preview,
         ]);
     }
 
@@ -293,14 +312,18 @@ class CustomerQuizController extends Controller
         /** @var \App\Models\Customer $customer */
         $customer = $request->user('customer');
 
-        $data = $request->validate(['guest_token' => 'required|string']);
+        // Sessiya artıq hesaba bağlıdırsa token tələb olunmur (abunə olduqdan sonra
+        // kuponu təkrar tələb etmək üçün eyni endpoint istifadə olunur).
+        $data = $request->validate(['guest_token' => 'nullable|string']);
 
         if ($session->customer_id !== null) {
             // artıq sahiblənib — eyni müştəridirsə idempotent davran
             abort_unless($session->customer_id === $customer->id, 409, 'Bu sessiya artıq başqa hesaba bağlanıb.');
         } else {
             abort_unless(
-                $session->guest_token !== null && hash_equals($session->guest_token, $data['guest_token']),
+                $session->guest_token !== null
+                    && filled($data['guest_token'] ?? null)
+                    && hash_equals($session->guest_token, (string) $data['guest_token']),
                 403,
                 'Sessiya tapılmadı və ya token yanlışdır.'
             );
@@ -308,6 +331,16 @@ class CustomerQuizController extends Controller
         }
 
         abort_if($session->finished_at === null, 422, 'Sessiya hələ tamamlanmayıb.');
+
+        // Kupon almaq üçün aktiv abunəlik lazımdır (config/subscriptions.php → gate).
+        // Sessiya artıq hesaba bağlanıb, ona görə abunə olduqdan sonra yenidən claim edilə bilər.
+        if (! $this->canEarnCoupon($customer)) {
+            return $this->subscriptionRequired(
+                $customer->hasActiveSubscription()
+                    ? 'Paketinizin aylıq kupon limitinə çatmısınız.'
+                    : 'Kuponu əldə etmək üçün aktiv abunəliyiniz olmalıdır.'
+            );
+        }
 
         $session->refresh();
         $coupon = $this->couponService->issueForSession($session);
@@ -406,6 +439,47 @@ class CustomerQuizController extends Controller
             'id'    => $customer->id,
             'name'  => $customer->name,
             'phone' => $customer->phone,
+            // Front girişdən dərhal sonra abunəlik vəziyyətini bilsin
+            'subscription' => [
+                'is_active'            => $customer->hasActiveSubscription(),
+                'required'             => (bool) config('subscriptions.customer.enabled'),
+                'gate'                 => $this->subscriptionGate(),
+                'plan_name'            => $customer->plan?->name,
+                'subscription_ends_at' => $customer->subscription_ends_at,
+            ],
         ];
+    }
+
+    /* ==================== ABUNƏLİK QAPISI ==================== */
+
+    /** Aktiv qapı rejimi: 'off' | 'claim' | 'play' (bax: config/subscriptions.php) */
+    protected function subscriptionGate(): string
+    {
+        if (! config('subscriptions.customer.enabled')) {
+            return 'off';
+        }
+
+        return (string) config('subscriptions.customer.gate', 'claim');
+    }
+
+    /** Müştəri kupon qazana bilər? (abunəlik + aylıq limit) */
+    protected function canEarnCoupon(?Customer $customer): bool
+    {
+        if ($this->subscriptionGate() === 'off') {
+            return true;
+        }
+
+        return $customer !== null
+            && $customer->hasActiveSubscription()
+            && $customer->canEarnMoreCoupons();
+    }
+
+    /** Front bu cavabı görüb istifadəçini abunəlik səhifəsinə yönləndirir. */
+    protected function subscriptionRequired(string $message)
+    {
+        return response()->json([
+            'message' => $message,
+            'code'    => 'subscription_required',
+        ], 402);
     }
 }

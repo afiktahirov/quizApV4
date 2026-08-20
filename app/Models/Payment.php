@@ -17,7 +17,9 @@ class Payment extends Model
     public const STATUS_EXPIRED  = 'expired';
 
     protected $fillable = [
-        'merchant_id', 'subscription_request_id', 'provider', 'external_order_id', 'save_card',
+        'merchant_id', 'customer_id',
+        'subscription_request_id', 'customer_subscription_request_id',
+        'provider', 'external_order_id', 'save_card',
         'amount', 'currency', 'status', 'raw_response', 'paid_at',
     ];
 
@@ -33,9 +35,25 @@ class Payment extends Model
         return $this->belongsTo(Merchant::class);
     }
 
+    public function customer()
+    {
+        return $this->belongsTo(Customer::class);
+    }
+
     public function subscriptionRequest()
     {
         return $this->belongsTo(SubscriptionRequest::class);
+    }
+
+    public function customerSubscriptionRequest()
+    {
+        return $this->belongsTo(CustomerSubscriptionRequest::class, 'customer_subscription_request_id');
+    }
+
+    /** Ödəniş müştəri abunəliyinə aiddir? (əks halda mağaza abunəliyidir) */
+    public function isCustomerPayment(): bool
+    {
+        return $this->customer_id !== null;
     }
 
     public function isPaid(): bool

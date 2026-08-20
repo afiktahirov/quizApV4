@@ -2,7 +2,6 @@
 
 namespace App\Services\Payments;
 
-use App\Models\Merchant;
 
 /**
  * Bütün bank/ödəniş provayderlərinin implement etməli olduğu interfeys.
@@ -18,7 +17,6 @@ interface PaymentGateway
      *                          tokenləşdirilir və extractStoredToken() ilə çıxarıla bilər.
      */
     public function createPayment(
-        Merchant $merchant,
         string $referenceId,
         float $amount,
         string $currency,

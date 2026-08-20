@@ -2,32 +2,38 @@
 
 namespace App\Services\Payments;
 
+use App\Models\Customer;
+use App\Models\CustomerSubscriptionRequest;
 use App\Models\Merchant;
 use App\Models\Payment;
 use App\Models\PaymentMethod;
 use App\Models\SubscriptionRequest;
+use App\Services\CustomerSubscriptionService;
 use App\Services\SubscriptionService;
 
 /**
  * Ödəniş axınını orkestrasiya edir: hansı bank seçildiyindən asılı olmayaraq
  * eyni məntiqi işlədir (PaymentGatewayManager provayderi həll edir).
+ *
+ * İki abunəlik növünə xidmət edir:
+ *  - mağaza (merchant) abunəliyi  → SubscriptionRequest
+ *  - istifadəçi (customer) abunəliyi → CustomerSubscriptionRequest
  */
 class PaymentService
 {
     public function __construct(
         protected PaymentGatewayManager $gateways,
         protected SubscriptionService $subscriptions,
+        protected CustomerSubscriptionService $customerSubscriptions,
     ) {}
 
-    /** Sorğu üçün ödəniş sessiyası başladır, "pending" Payment sətri yaradır və bank HPP URL-ini qaytarır. */
+    /** MAĞAZA: sorğu üçün ödəniş sessiyası başladır və bank HPP URL-ini qaytarır. */
     public function initiate(SubscriptionRequest $request, ?string $provider = null, bool $saveCard = false): PaymentSession
     {
         $provider ??= $this->gateways->defaultProvider();
         $gateway    = $this->gateways->gateway($provider);
-        $merchant   = $request->merchant;
 
         $session = $gateway->createPayment(
-            $merchant,
             (string) $request->id,
             (float) $request->amount,
             $request->currency,
@@ -36,15 +42,44 @@ class PaymentService
         );
 
         Payment::create([
-            'merchant_id'              => $merchant->id,
+            'merchant_id'             => $request->merchant_id,
             'subscription_request_id' => $request->id,
-            'provider'                 => $provider,
+            'provider'                => $provider,
             'external_order_id'       => $session->externalOrderId,
-            'save_card'                => $saveCard,
-            'amount'                   => $request->amount,
-            'currency'                 => $request->currency,
-            'status'                   => Payment::STATUS_PENDING,
-            'raw_response'             => $session->rawResponse,
+            'save_card'               => $saveCard,
+            'amount'                  => $request->amount,
+            'currency'                => $request->currency,
+            'status'                  => Payment::STATUS_PENDING,
+            'raw_response'            => $session->rawResponse,
+        ]);
+
+        return $session;
+    }
+
+    /** İSTİFADƏÇİ: müştəri abunəlik sorğusu üçün ödəniş sessiyası başladır. */
+    public function initiateForCustomer(CustomerSubscriptionRequest $request, ?string $provider = null, bool $saveCard = false): PaymentSession
+    {
+        $provider ??= $this->gateways->defaultProvider();
+        $gateway    = $this->gateways->gateway($provider);
+
+        $session = $gateway->createPayment(
+            'C' . $request->id,
+            (float) $request->amount,
+            $request->currency,
+            'Quizzo abunəlik: ' . $request->plan->name . ' (sorğu #' . $request->id . ')',
+            $saveCard,
+        );
+
+        Payment::create([
+            'customer_id'                      => $request->customer_id,
+            'customer_subscription_request_id' => $request->id,
+            'provider'                         => $provider,
+            'external_order_id'                => $session->externalOrderId,
+            'save_card'                        => $saveCard,
+            'amount'                           => $request->amount,
+            'currency'                         => $request->currency,
+            'status'                           => Payment::STATUS_PENDING,
+            'raw_response'                     => $session->rawResponse,
         ]);
 
         return $session;
@@ -84,6 +119,10 @@ class PaymentService
             if ($payment->subscriptionRequest?->isPending()) {
                 $this->subscriptions->approveViaPayment($payment->subscriptionRequest, $payment);
             }
+
+            if ($payment->customerSubscriptionRequest?->isPending()) {
+                $this->customerSubscriptions->approveViaPayment($payment->customerSubscriptionRequest, $payment);
+            }
         }
 
         return $payment;
@@ -97,15 +136,20 @@ class PaymentService
             return;
         }
 
+        // Kart sahibi mağaza da ola bilər, müştəri də — hansı doludursa ona bağlanır.
+        $owner = $payment->isCustomerPayment()
+            ? ['customer_id' => $payment->customer_id, 'merchant_id' => null]
+            : ['merchant_id' => $payment->merchant_id, 'customer_id' => null];
+
         PaymentMethod::updateOrCreate(
-            ['merchant_id' => $payment->merchant_id, 'provider' => $payment->provider],
+            $owner + ['provider' => $payment->provider],
             ['external_token_id' => $token->externalTokenId, 'card_mask' => $token->cardMask],
         );
     }
 
     /**
-     * Yadda saxlanılan kartla mağazanın CARİ paketini 1 dövr üçün avtomatik yeniləyir.
-     * Müştərinin iştirakı olmadan (server-server) icra olunur — planlaşdırılmış tapşırıqdan çağırılır.
+     * MAĞAZA: yadda saxlanılan kartla cari paketi 1 dövr üçün avtomatik yeniləyir.
+     * Müştərinin iştirakı olmadan (server-server) icra olunur.
      */
     public function chargeForRenewal(Merchant $merchant, ?string $provider = null): Payment
     {
@@ -128,21 +172,63 @@ class PaymentService
         );
 
         $payment = Payment::create([
-            'merchant_id'              => $merchant->id,
+            'merchant_id'             => $merchant->id,
             'subscription_request_id' => $request->id,
-            'provider'                 => $provider,
+            'provider'                => $provider,
             'external_order_id'       => $result->externalOrderId,
-            'amount'                   => $request->amount,
-            'currency'                 => $request->currency,
-            'status'                   => $result->status,
-            'raw_response'             => $result->rawResponse,
-            'paid_at'                  => $result->isPaid() ? now() : null,
+            'amount'                  => $request->amount,
+            'currency'                => $request->currency,
+            'status'                  => $result->status,
+            'raw_response'            => $result->rawResponse,
+            'paid_at'                 => $result->isPaid() ? now() : null,
         ]);
 
         if ($result->isPaid()) {
             $this->subscriptions->approveViaPayment($request, $payment);
         } else {
             $this->subscriptions->reject($request, null, 'Avtomatik yenilənmə uğursuz oldu (bank cavabı: ' . $result->status . ')');
+        }
+
+        return $payment;
+    }
+
+    /** İSTİFADƏÇİ: yadda saxlanılan kartla müştəri abunəliyini avtomatik yeniləyir. */
+    public function chargeCustomerRenewal(Customer $customer, ?string $provider = null): Payment
+    {
+        $provider ??= $this->gateways->defaultProvider();
+        $method     = $customer->defaultPaymentMethod($provider);
+
+        if (! $method) {
+            throw new PaymentGatewayException('İstifadəçinin yadda saxlanılan kartı yoxdur', 'NO_STORED_CARD');
+        }
+
+        $request = $this->customerSubscriptions->createRenewalRequest($customer);
+        $gateway = $this->gateways->gateway($provider);
+
+        $result = $gateway->chargeStoredCard(
+            $method->external_token_id,
+            'C' . $request->id,
+            (float) $request->amount,
+            $request->currency,
+            'Avtomatik yenilənmə: ' . $request->plan->name . ' (sorğu #' . $request->id . ')',
+        );
+
+        $payment = Payment::create([
+            'customer_id'                      => $customer->id,
+            'customer_subscription_request_id' => $request->id,
+            'provider'                         => $provider,
+            'external_order_id'                => $result->externalOrderId,
+            'amount'                           => $request->amount,
+            'currency'                         => $request->currency,
+            'status'                           => $result->status,
+            'raw_response'                     => $result->rawResponse,
+            'paid_at'                          => $result->isPaid() ? now() : null,
+        ]);
+
+        if ($result->isPaid()) {
+            $this->customerSubscriptions->approveViaPayment($request, $payment);
+        } else {
+            $this->customerSubscriptions->reject($request, null, 'Avtomatik yenilənmə uğursuz oldu (bank cavabı: ' . $result->status . ')');
         }
 
         return $payment;

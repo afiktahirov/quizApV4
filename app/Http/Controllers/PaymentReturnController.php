@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Payment;
 use App\Services\Payments\PaymentService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -11,6 +12,9 @@ use Throwable;
 /**
  * Bankın ödəniş səhifəsindən (HPP) qayıdış nöqtəsi. Brauzerdən gələn parametrlərə
  * etibar edilmir — PaymentService::handleReturn() daxilində status serverdən-serverə yenidən yoxlanılır.
+ *
+ * Mağaza ödənişləri Filament panelinə (/abuneliyim), istifadəçi ödənişləri isə
+ * React tətbiqinə (config('subscriptions.frontend_url') + /subscription) qaytarılır.
  */
 class PaymentReturnController extends Controller
 {
@@ -19,8 +23,14 @@ class PaymentReturnController extends Controller
         $externalOrderId = $request->query('id') ?? $request->query('ID');
 
         if (! $externalOrderId) {
-            return redirect('/abuneliyim?payment=error');
+            return $this->back(null, 'error');
         }
+
+        // Qayıdış ünvanını seçmək üçün ödənişin kimə aid olduğunu əvvəlcədən müəyyən edirik.
+        $known = Payment::where('provider', $provider)
+            ->where('external_order_id', (string) $externalOrderId)
+            ->latest()
+            ->first();
 
         try {
             $payment = $service->handleReturn($provider, (string) $externalOrderId);
@@ -31,9 +41,20 @@ class PaymentReturnController extends Controller
                 'error' => $e->getMessage(),
             ]);
 
-            return redirect('/abuneliyim?payment=error');
+            return $this->back($known, 'error');
         }
 
-        return redirect('/abuneliyim?payment=' . ($payment->isPaid() ? 'success' : 'failed'));
+        return $this->back($payment, $payment->isPaid() ? 'success' : 'failed');
+    }
+
+    protected function back(?Payment $payment, string $status): RedirectResponse
+    {
+        if ($payment?->isCustomerPayment()) {
+            return redirect()->away(
+                config('subscriptions.frontend_url') . '/subscription?payment=' . $status
+            );
+        }
+
+        return redirect('/abuneliyim?payment=' . $status);
     }
 }

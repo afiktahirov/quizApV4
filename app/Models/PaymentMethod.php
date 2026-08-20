@@ -9,10 +9,15 @@ class PaymentMethod extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['merchant_id', 'provider', 'external_token_id', 'card_mask'];
+    protected $fillable = ['merchant_id', 'customer_id', 'provider', 'external_token_id', 'card_mask'];
 
     public function merchant()
     {
         return $this->belongsTo(Merchant::class);
+    }
+
+    public function customer()
+    {
+        return $this->belongsTo(Customer::class);
     }
 }
